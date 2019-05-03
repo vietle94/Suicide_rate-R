@@ -1,0 +1,35 @@
+---
+title: "Suicide rate"
+output: html_notebook
+---
+
+# Load library
+```{r, warning = F, message = F}
+library(tidyverse)
+library(skimr)
+```
+
+# Load data
+
+```{r}
+data <- read_csv("./data/master.csv")
+data <- data %>% rename(HDI = `HDI for year`)
+```
+
+Have a look
+```{r}
+summary(data)
+```
+
+- country-year column is just a concatenation of country and year column
+
+- suicides/100k pop is calculated by suicides / population * 100000
+
+- HDI is Human Development Report, seems missing alot, the only variable is missing
+
+- Age is divided into brackets
+
+```{r}
+skim(data)
+```
+
