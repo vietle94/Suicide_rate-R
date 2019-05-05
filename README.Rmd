@@ -1,7 +1,14 @@
 ---
 title: "Suicide rate"
-output: html_notebook
+output: md_document
 ---
+
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  fig.path = "Figures/README-"
+)
+```
 
 # Load library
 ```{r, warning = F, message = F}
@@ -30,6 +37,17 @@ summary(data)
 - Age is divided into brackets
 
 ```{r}
-skim(data)
+skim(data)%>% skimr::kable()
 ```
 
+There are:
+
+- 6 Age brackets
+
+- 101 differenet countries in this data set
+
+- Year from 1985 to 2016. (32 years)
+
+- 2321 combinations of country-year (less than 32 * 101). Must be some implicit missing data 
+
+- 
