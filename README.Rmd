@@ -37,7 +37,7 @@ summary(data)
 - Age is divided into brackets
 
 ```{r}
-skim(data)%>% skimr::kable()
+skim(data)
 ```
 
 There are:
