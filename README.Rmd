@@ -1,6 +1,9 @@
 ---
 title: "Suicide rate"
-output: md_document
+output: 
+  html_document:
+    keep_md : TRUE
+    toc : TRUE
 ---
 
 
@@ -29,6 +32,63 @@ data <- data %>% rename(HDI = `HDI for year`,
                         gdp_capita = `gdp_per_capita ($)`)
 ```
 
+# Load extra data for worldmaps and statistics
+
+## For world map
+
+```{r}
+library(maps)
+
+world <- map_data("world")
+world[world$region == "Antigua" | world$region == "Barbuda",]$region <- "Antigua and Barbuda"
+world[world$region == "Cape Verde",]$region <- "Cabo Verde"
+world[world$region == "South Korea",]$region <- "Republic of Korea"
+world[world$region == "Russia",]$region <- "Russian Federation"
+world[world$region == "Saint Kitts" | world$region == "Nevis",]$region <- "Saint Kitts and Nevis"
+world[world$region == "Saint Vincent" | world$region == "Grenadines",]$region <- "Saint Vincent and Grenadines"
+world[world$region == "Trinidad" | world$region == "Tobago",]$region <- "Trinidad and Tobago"
+world[world$region == "UK",]$region <- "United Kingdom"
+world[world$region == "USA",]$region <- "United States"
+world[world$subregion == "Macao" & !is.na(world$subregion),]$region <- "Macau"
+
+worldmap <- ggplot(data = world, aes(long, lat, group = group)) + geom_polygon(fill = "#f2f2f2") +
+  theme(panel.background = element_blank(),
+                   axis.title = element_blank(),
+                   axis.line.x = element_blank(),
+                   axis.ticks = element_blank(),
+                   axis.text = element_blank()) +
+   coord_fixed(1.2)
+
+```
+
+## For statistics
+
+- Get area
+
+- Get continents
+
+- Get country codes
+
+Might not be a good idea 
+
+```{r}
+library(wbstats)
+
+# Searching area indicator in the database
+# wbsearch(pattern = "area") 
+
+#wb <- wb(country = "all", indicator = "AG.SRF.TOTL.K2", startdate = 1985, enddate = 2016) %>% 
+ # rename(year = date) %>% 
+#  mutate(year = as.numeric(year))
+#temp <- left_join(countrystat, wb, by = c("country" = "country", "year" = "year"))
+
+#countries <- wbcountries()
+
+#temp %>% filter(is.na(iso3c)) %>% view()
+
+```
+
+
 # Data Exploratory ----------------------- 
 
 ## Have a look
@@ -50,7 +110,7 @@ summary(data)
 ```{r}
 
 skim_with(numeric = list(hist = NULL))
-skim(data) %>% skimr::kable()
+skim(data) 
 
 ```
 
@@ -123,26 +183,7 @@ suicides <- data %>% group_by(country, year) %>% summarise(suicides_rate = mean(
 
 world <- map_data("world")
 
-world[world$region == "Antigua" | world$region == "Barbuda",]$region <- "Antigua and Barbuda"
-world[world$region == "Cape Verde",]$region <- "Cabo Verde"
-world[world$region == "South Korea",]$region <- "Republic of Korea"
-world[world$region == "Russia",]$region <- "Russian Federation"
-world[world$region == "Saint Kitts" | world$region == "Nevis",]$region <- "Saint Kitts and Nevis"
-world[world$region == "Saint Vincent" | world$region == "Grenadines",]$region <- "Saint Vincent and Grenadines"
-world[world$region == "Trinidad" | world$region == "Tobago",]$region <- "Trinidad and Tobago"
-world[world$region == "UK",]$region <- "United Kingdom"
-world[world$region == "USA",]$region <- "United States"
-world[world$subregion == "Macao" & !is.na(world$subregion),]$region <- "Macau"
 
-
-
-worldmap <- ggplot(data = world, aes(long, lat, group = group)) + geom_polygon(fill = "#f2f2f2") +
-  theme(panel.background = element_blank(),
-                   axis.title = element_blank(),
-                   axis.line.x = element_blank(),
-                   axis.ticks = element_blank(),
-                   axis.text = element_blank()) +
-   coord_fixed(1.2)
 
 worldmap + suicides %>% group_by(country) %>% summarise(n = sum(is.na(suicides_rate))) %>% left_join(world, by = c("country" = "region")) %>%  
   geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log2")
@@ -158,9 +199,16 @@ data %>% group_by(country, year) %>% summarise(na = sum(is.na(suicides_no))) %>%
 
 There are a lot of random missing data between all
 
-## What is generation's age range?
+Hierachical clustering
 
 ```{r}
+temp <- data %>% group_by(country, year) %>% summarise(na = sum(is.na(suicides_no)))
+```
+
+
+## What is generation's age range?
+
+```{r, message = F, warning = F}
 data %>% filter(!is.na(generation)) %>% 
   separate(age, into =c("min", "max")) %>% mutate(max = ifelse(max== "years", 100, max)) %>% 
   mutate(min = as.integer(min), max = as.integer(max)) %>% 
@@ -203,11 +251,21 @@ There is no big discrepancy between data set and Wiki, no outliner either, so it
 
 # Combines with other data
 
+```{r}
+
+
+
+```
+
+
 Continents
 
 Country size so we can calculate population/area
 
 map package?
+
+
+# Analyze
 
 ## Suicides rate by year
 
