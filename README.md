@@ -263,7 +263,7 @@ Plot on map
     worldmap + suicides %>% group_by(country) %>% summarise(n = sum(is.na(suicides_rate))) %>% left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log2")
 
-![](Figures/README-unnamed-chunk-13-1.png)
+![](/Figures/README-unnamed-chunk-13-1.png)
 
 Most of the data are from Russia, America nand Europe. There are some
 countries that have a lot of missing data
@@ -273,7 +273,7 @@ Missing pattern
     data %>% group_by(country, year) %>% summarise(na = sum(is.na(suicides_no))) %>% filter(na > 0) %>% 
       ggplot() + geom_tile(aes(year, country))
 
-![](Figures/README-unnamed-chunk-14-1.png)
+![](/Figures/README-unnamed-chunk-14-1.png)
 
 There are a lot of random missing data between all
 
@@ -291,7 +291,7 @@ What is generation’s age range?
       ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) + geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
       scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + ylab("Birth year")
 
-![](Figures/README-unnamed-chunk-16-1.png)
+![](/Figures/README-unnamed-chunk-16-1.png)
 
 -   Since Age values are not provided but put in the age range, we can
     only estimate the actual year birth.
@@ -352,7 +352,7 @@ year.
       ungroup() %>% group_by(year) %>% mutate(n = n()) %>% 
       ggplot(aes(x = factor(year))) + geom_boxplot(aes(y = suicides_rate )) + geom_text(aes(label = n, y = 0.0006))
 
-![](Figures/README-unnamed-chunk-18-1.png)
+![](/Figures/README-unnamed-chunk-18-1.png)
 
 ### By countries
 
@@ -379,7 +379,7 @@ No relation ship between GDP and suicide rate
 
     ## Warning: Removed 927 rows containing missing values (geom_point).
 
-![](Figures/README-unnamed-chunk-20-1.png)
+![](/Figures/README-unnamed-chunk-20-1.png)
 
 Suicides rate per country per year
 
@@ -391,7 +391,7 @@ From 2010
       left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
 
-![](Figures/README-unnamed-chunk-21-1.png)
+![](/Figures/README-unnamed-chunk-21-1.png)
 
 Without year
 ============
@@ -411,7 +411,7 @@ Finland
       ggplot() + geom_point(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) +
       geom_line(aes(year, suicides_no, colour = age)) + facet_wrap(~sex)
 
-![](Figures/README-unnamed-chunk-22-1.png)
+![](/Figures/README-unnamed-chunk-22-1.png)
 
 By gender
 =========
@@ -423,4 +423,4 @@ By gender
 
     ## Warning: Removed 1822 rows containing non-finite values (stat_boxplot).
 
-![](Figures/README-unnamed-chunk-23-1.png)
+![](/Figures/README-unnamed-chunk-23-1.png)

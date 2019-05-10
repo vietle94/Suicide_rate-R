@@ -10,7 +10,7 @@ output:
 
 ```{r, echo = FALSE}
 knitr::opts_chunk$set(
-  fig.path = "Figures/README-",
+  fig.path = "/Figures/README-",
   fig.width=12, fig.height=8
 )
 ```
