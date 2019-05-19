@@ -3,8 +3,6 @@ title: "Suicide rate"
 date: 2019-05-14T10-24-00
 output: 
   md_document: default
-  html_document:
-    toc : TRUE
 ---
 
 ```{r, echo = FALSE}
@@ -337,7 +335,7 @@ rate %>%
 ### Top recorded suicides rate in each year with barplot
 
 ```{r}
-temp <- rate %>% ungroup() %>%
+(rate %>% ungroup() %>%
   group_by(year) %>% 
   top_n(n = 5, wt = suicides_rate) %>% 
   mutate(rank = rank(-suicides_rate)) %>% 
@@ -350,21 +348,20 @@ temp <- rate %>% ungroup() %>%
   coord_flip() +
   transition_states(year, transition_length = 2, state_length = 2) +
   labs(title = "{closest_state}")+
-  enter_drift(x_mod = -1) + exit_drift(x_mod = 1)
-
-animate(temp, nframes = 300, height = 800, width = 800 )
+  enter_drift(x_mod = -1) + exit_drift(x_mod = 1)) %>% 
+  animate(nframes = 300, height = 800, width = 800 )
 
 
 ```
 
 ### Recorded suicides rate in each year with map
 
-```{r fig.height=8, fig.width=12}
-
-(worldmap +
-  geom_polygon(data = rate %>% left_join(world, by = c("country" = "region")) %>% filter(!is.na(suicides_rate)),
-               aes(fill = suicides_rate))  + 
-  scale_fill_viridis_c(name = "Suicides rate", 
+#```{r fig.height=8, fig.width=12}
+(worldmap + geom_polygon(data = rate %>% 
+                           left_join(world, by = c("country" = "region")) %>% 
+                           filter(!is.na(suicides_rate)),
+                         aes(fill = suicides_rate))  + 
+   scale_fill_viridis_c(name = "Suicides rate", 
                        guide = guide_colorbar(title.position = "top", 
                                               direction = "horizontal"),
                        na.value  = "#f2f2f2") +
@@ -543,7 +540,50 @@ data %>% group_by(country, year, sex) %>%
 
 ```
 
+## Age group
 
+### Number of suicides each age group in the world
+
+```{r}
+data %>% group_by(year, age) %>% 
+  summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
+  ggplot(aes(year, suicides_no, color = age)) + 
+  geom_line() + 
+  theme(legend.position = "none")
+```
+
+### Rate of suicides each age group in the world
+
+```{r}
+data %>% group_by(year, age) %>% 
+  summarise(suicides_rate = sum(suicides_no, na.rm = T)/sum(population, na.rm = T) * 1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = age)) + 
+  geom_line() + 
+  theme(legend.position = "none")
+
+```
+
+### Number of suicides by age group each year in every country
+
+```{r}
+data %>% group_by(country, year, age) %>% 
+  summarise(suicides_no = sum(suicides_no)) %>% 
+  ggplot(aes(year, suicides_no, color = country)) + 
+  geom_line() + facet_wrap(~ age) +
+  theme(legend.position = "none")
+
+```
+
+### Rate of suicides by age group each year in every country
+
+```{r}
+data %>% group_by(country, year, age) %>% 
+  summarise(suicides_no = sum(suicides_no)) %>% 
+  ggplot(aes(year, suicides_no, color = country)) + 
+  geom_line() + facet_wrap(~ age) +
+  theme(legend.position = "none")
+
+```
 
 ## Finland
 
