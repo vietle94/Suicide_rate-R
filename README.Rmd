@@ -356,11 +356,14 @@ rate %>%
 
 ### Recorded suicides rate in each year with map
 
-#```{r fig.height=8, fig.width=12}
-(worldmap + geom_polygon(data = rate %>% 
-                           left_join(world, by = c("country" = "region")) %>% 
-                           filter(!is.na(suicides_rate)),
-                         aes(fill = suicides_rate))  + 
+```{r fig.height=8, fig.width=12}
+
+ggplot() + 
+ #  borders(fill = "#f2f2f2") +
+   geom_polygon(data = rate %>%
+                  left_join(world, by = c("country" = "region")) %>% 
+                  filter(!is.na(suicides_rate)),
+                aes(fill = suicides_rate, x = long, y = lat, group = group))  + 
    scale_fill_viridis_c(name = "Suicides rate", 
                        guide = guide_colorbar(title.position = "top", 
                                               direction = "horizontal"),
@@ -378,14 +381,16 @@ rate %>%
         legend.title.align = 0.5,
         panel.grid = element_blank(),
         plot.margin = margin(15,1,1,1)) +
-  labs(title = "Suicide rate in {closest_state}") +
-  transition_states(year)) %>% 
-  animate(duration = 20, height = 800, width = 1200)
+  coord_fixed(1.2) +
+  labs(title = "Suicide rate in {closest_state}")+
+  transition_states(year)
 
 ```
 
 
-
++
+  transition_states(year)) %>% 
+  animate(duration = 20, height = 800, width = 1200)
 
 ### Top 10 biggest increase in suicide rate in 1 year all time
 
