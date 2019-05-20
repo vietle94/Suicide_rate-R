@@ -6,6 +6,8 @@ Load library ——————
     library(maps)
     library(gganimate)
     library(ggrepel)
+    library(maps)
+
     theme_set(theme_minimal())
 
 Load data ——————
@@ -37,12 +39,14 @@ Load data ——————
 Load extra data for worldmaps and statistics
 ============================================
 
-For world map
--------------
-
-    library(maps)
+Load world map
+--------------
 
     world <- map_data("world")
+
+Draw world map
+--------------
+
     world[world$region == "Antigua" | world$region == "Barbuda",]$region <- "Antigua and Barbuda"
     world[world$region == "Cape Verde",]$region <- "Cabo Verde"
     world[world$region == "South Korea",]$region <- "Republic of Korea"
@@ -259,13 +263,7 @@ Let’s find out how many missing data with each country each year
 
 Plot on map
 
-    suicides <- data %>% group_by(country, year) %>% summarise(suicides_rate = mean(suicides_rate))
-
-    world <- map_data("world")
-
-
-
-    worldmap + suicides %>% group_by(country) %>% summarise(n = sum(is.na(suicides_rate))) %>% left_join(world, by = c("country" = "region")) %>%  
+    worldmap + data %>% group_by(country, year) %>% summarise(n = sum(is.na(suicides_rate))/12) %>% left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + 
       scale_fill_viridis_c(trans = "log2", name = "Years of missing data", 
                            guide = guide_colorbar(title.position = "top", 
@@ -279,7 +277,9 @@ Plot on map
                                       color = "#222222"),
             panel.grid = element_blank())
 
-![](README_files/figure-markdown_strict/unnamed-chunk-13-1.png)
+    ## Warning: Transformation introduced infinite values in discrete y-axis
+
+![](README_files/figure-markdown_strict/unnamed-chunk-14-1.png)
 
 Most of the data are from Russia, America nand Europe. There are some
 countries that have a lot of missing data
@@ -295,7 +295,7 @@ Missing pattern
       theme( panel.grid = element_blank()) +
       scale_x_continuous(expand = c(0,0))
 
-![](README_files/figure-markdown_strict/unnamed-chunk-14-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-15-1.png)
 
 There are a lot of random missing data through out the years
 
@@ -309,7 +309,7 @@ What is generation’s age range?
       ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) + geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
       scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + ylab("Birth year")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-15-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-16-1.png)
 
 -   Since Age values are not provided but put in the age range, we can
     only estimate the actual year birth.
@@ -378,7 +378,7 @@ The number on top shows number of countries recorded in each year.
       geom_text(aes(label = n, y = 0.0006)) +
       theme(axis.text.x = element_text(angle = 45))
 
-![](README_files/figure-markdown_strict/unnamed-chunk-18-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-19-1.png)
 
 There is no noticable trend
 
@@ -400,411 +400,7 @@ There is no noticable trend
       labs(title = "{round(frame_along)}") +
       transition_reveal(year) 
 
-    ## Warning: Removed 110 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 110 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 110 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 110 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 160 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 160 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 160 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 205 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 205 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 205 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 205 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 254 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 254 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 254 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 299 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 299 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 299 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 320 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 320 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 320 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 358 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 358 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 358 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 392 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 392 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 392 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 392 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 413 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 413 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 413 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 438 rows containing missing values (geom_path).
-
-    ## Warning: Removed 16 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 438 rows containing missing values (geom_path).
-
-    ## Warning: Removed 16 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 438 rows containing missing values (geom_path).
-
-    ## Warning: Removed 16 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 447 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 447 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 447 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 455 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 455 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 455 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 466 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 466 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 466 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 466 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 494 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 494 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 494 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 496 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 496 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 496 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 484 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 497 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 497 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 497 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 517 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 517 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 517 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 517 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 526 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 526 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 526 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 540 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 540 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 540 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 548 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 548 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 548 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 552 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 552 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 552 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 567 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 567 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 567 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 567 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 571 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 571 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 571 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 586 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 586 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 586 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 605 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 605 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 605 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 620 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 620 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 620 rows containing missing values (geom_path).
-
-    ## Warning: Removed 14 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 644 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 644 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 644 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 644 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 674 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 674 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 674 rows containing missing values (geom_path).
-
-    ## Warning: Removed 15 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 775 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 775 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 775 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 775 rows containing missing values (geom_path).
-
-    ## Warning: Removed 13 rows containing missing values (geom_text_repel).
-
-![](README_files/figure-markdown_strict/unnamed-chunk-19-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-20-1.gif)
 
 ### Top recorded suicides rate in each year with barplot
 
@@ -824,28 +420,32 @@ There is no noticable trend
       enter_drift(x_mod = -1) + exit_drift(x_mod = 1)) %>% 
       animate(nframes = 300, height = 800, width = 800 )
 
-![](README_files/figure-markdown_strict/unnamed-chunk-20-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-21-1.gif)
 
 ### Recorded suicides rate in each year with map
 
-\#\`\`\`{r fig.height=8, fig.width=12} (worldmap + geom\_polygon(data =
-rate %&gt;% left\_join(world, by = c(“country” = “region”)) %&gt;%
-filter(!is.na(suicides\_rate)), aes(fill = suicides\_rate)) +
-scale\_fill\_viridis\_c(name = “Suicides rate”, guide =
-guide\_colorbar(title.position = “top”, direction = “horizontal”),
-na.value = “\#f2f2f2”) + theme(panel.background = element\_blank(),
-axis.title = element\_blank(), axis.line.x = element\_blank(),
-axis.ticks = element\_blank(), axis.text = element\_blank(),
-legend.position = “bottom”, legend.key.width = unit(5,“cm”), plot.title
-= element\_text(size = 20, face = “bold”, color = “\#222222”),
-legend.text = element\_text(size = 10, face = “bold”, color =
-“\#222222”), legend.title = element\_text(size = 20, face = “bold”,
-color = “\#222222”), legend.title.align = 0.5, panel.grid =
-element\_blank(), plot.margin = margin(15,1,1,1)) + labs(title =
-“Suicide rate in {closest\_state}”) + transition\_states(year)) %&gt;%
-animate(duration = 20, height = 800, width = 1200)
+    (worldmap +
+       geom_polygon(data = rate %>%
+                      left_join(world, by = c("country" = "region")) %>% 
+                      filter(!is.na(suicides_rate)),
+                    aes(fill = suicides_rate))  + 
+       scale_fill_viridis_c(name = "Suicides rate", 
+                           guide = guide_colorbar(title.position = "top", 
+                                                  direction = "horizontal"),
+                           na.value  = "#f2f2f2") +
+      theme(legend.position = "bottom",
+            legend.key.width = unit(5,"cm"),
+            plot.title = element_text(size = 20, face = "bold", color = "#222222"),
+            legend.text = element_text(size = 10, face = "bold", color = "#222222"),
+            legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+            legend.title.align = 0.5,
+            panel.grid = element_blank(),
+            plot.margin = margin(15,1,1,1)) +
+      labs(title = "Suicide rate in {closest_state}")+
+      transition_states(year)) %>% 
+      animate(duration = 20, height = 800, width = 1200)
 
-\`\`\`
+![](README_files/figure-markdown_strict/unnamed-chunk-22-1.gif)
 
 ### Top 10 biggest increase in suicide rate in 1 year all time
 
@@ -908,411 +508,7 @@ of the events in these countries
       transition_reveal(year)) %>% 
       animate(duration = 20, width = 1200, height = 800)
 
-    ## Warning: Removed 16 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 16 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 16 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 16 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 24 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 24 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 24 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 32 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 32 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 32 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 32 rows containing missing values (geom_path).
-
-    ## Warning: Removed 8 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 38 rows containing missing values (geom_path).
-
-    ## Warning: Removed 7 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 38 rows containing missing values (geom_path).
-
-    ## Warning: Removed 7 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 38 rows containing missing values (geom_path).
-
-    ## Warning: Removed 7 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 43 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 43 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 43 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 49 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 49 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 49 rows containing missing values (geom_path).
-
-    ## Warning: Removed 6 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 51 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 51 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 51 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 56 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 56 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 56 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 56 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 5 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 61 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 62 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 62 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 62 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 63 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 63 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 63 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 63 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 64 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 64 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 64 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 65 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 65 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 65 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 66 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 67 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 67 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 67 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 67 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 68 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 68 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 68 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 69 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 69 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 69 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 70 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 70 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 70 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 71 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 71 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 71 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 72 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 72 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 72 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 72 rows containing missing values (geom_path).
-
-    ## Warning: Removed 1 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 74 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 74 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 74 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 76 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 76 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 76 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 78 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 78 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 78 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 80 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 80 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 80 rows containing missing values (geom_path).
-
-    ## Warning: Removed 2 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 83 rows containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 83 rows containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 83 rows containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 83 rows containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 87 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 87 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 87 rows containing missing values (geom_path).
-
-    ## Warning: Removed 4 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 97 rows containing missing values (geom_path).
-
-    ## Warning: Removed 10 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 97 rows containing missing values (geom_path).
-
-    ## Warning: Removed 10 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 97 rows containing missing values (geom_path).
-
-    ## Warning: Removed 10 rows containing missing values (geom_text_repel).
-
-    ## Warning: Removed 97 rows containing missing values (geom_path).
-
-    ## Warning: Removed 10 rows containing missing values (geom_text_repel).
-
-![](README_files/figure-markdown_strict/unnamed-chunk-23-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-25-1.gif)
 
 ### Suicide rate by GDP
 
@@ -1323,7 +519,7 @@ of the events in these countries
 
     ## Warning: Removed 927 rows containing missing values (geom_point).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-24-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-26-1.png)
 
 There is no indication of a relationship between them
 
@@ -1354,7 +550,7 @@ Prepare data
       labs(title = "Year: {round(frame_along)}") +
       transition_reveal(year)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-26-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-28-1.gif)
 
 From 2010
 ---------
@@ -1368,7 +564,7 @@ Total number of people suicide since 2010
 
     ## Warning: Transformation introduced infinite values in discrete y-axis
 
-![](README_files/figure-markdown_strict/unnamed-chunk-27-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-29-1.png)
 
 ### Average rate of people suicide since 2010
 
@@ -1377,7 +573,7 @@ Total number of people suicide since 2010
       left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-28-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-30-1.png)
 
 EU
 --
@@ -1393,7 +589,7 @@ Gender
       geom_line() + 
       theme(legend.position = "none")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-29-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-31-1.png)
 
 ### Rate of suicides by gender each year in the world
 
@@ -1403,7 +599,7 @@ Gender
       geom_line() + 
       theme(legend.position = "none")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-30-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-32-1.png)
 
 ### Number of suicides by gender each year in every country
 
@@ -1415,7 +611,7 @@ Gender
 
     ## Warning: Removed 807 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-31-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-33-1.png)
 
 ### Rate of suicides by gender each year in every country
 
@@ -1427,7 +623,7 @@ Gender
 
     ## Warning: Removed 807 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-32-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-34-1.png)
 
 Age group
 ---------
@@ -1440,7 +636,7 @@ Age group
       geom_line() + 
       theme(legend.position = "none")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-33-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-35-1.png)
 
 ### Rate of suicides each age group in the world
 
@@ -1452,7 +648,7 @@ Age group
 
     ## Warning: Removed 1 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-34-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-36-1.png)
 
 ### Number of suicides by age group each year in every country
 
@@ -1464,7 +660,7 @@ Age group
 
     ## Warning: Removed 759 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-35-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-37-1.png)
 
 ### Rate of suicides by age group each year in every country
 
@@ -1476,7 +672,7 @@ Age group
 
     ## Warning: Removed 759 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-36-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-38-1.png)
 
 Finland
 -------
@@ -1489,7 +685,7 @@ Finland
       geom_line(aes(year, suicides_no, colour = age)) + facet_wrap(~sex) +
       scale_color_discrete(name = "Age group")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-37-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-39-1.png)
 
 ### Rate of suicides by sex
 
@@ -1499,7 +695,7 @@ Finland
       geom_line(aes(year, suicides_rate, colour = age)) + facet_wrap(~sex)+
       scale_color_discrete(name = "Age group")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-38-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-40-1.png)
 
 ### Rate of suicides by generation
 
@@ -1510,4 +706,4 @@ Finland
       geom_line(aes(year, suicides_rate, colour = generation)) + facet_wrap(~sex)+
       scale_color_discrete(name = "Genration")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-39-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-41-1.png)

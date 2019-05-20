@@ -21,6 +21,8 @@ library(skimr)
 library(maps)
 library(gganimate)
 library(ggrepel)
+library(maps)
+
 theme_set(theme_minimal())
 ```
 
@@ -36,12 +38,17 @@ data <- data %>% rename(HDI = `HDI for year`,
 
 # Load extra data for worldmaps and statistics
 
-## For world map
+
+## Load world map
 
 ```{r}
-library(maps)
-
 world <- map_data("world")
+```
+
+## Draw world map
+
+```{r}
+
 world[world$region == "Antigua" | world$region == "Barbuda",]$region <- "Antigua and Barbuda"
 world[world$region == "Cape Verde",]$region <- "Cabo Verde"
 world[world$region == "South Korea",]$region <- "Republic of Korea"
@@ -62,6 +69,8 @@ worldmap <- ggplot(data = world, aes(long, lat, group = group)) + geom_polygon(f
    coord_fixed(1.2)
 
 ```
+
+
 
 ## For statistics
 
@@ -183,13 +192,8 @@ Plot on map
 
 
 ```{r}
-suicides <- data %>% group_by(country, year) %>% summarise(suicides_rate = mean(suicides_rate))
 
-world <- map_data("world")
-
-
-
-worldmap + suicides %>% group_by(country) %>% summarise(n = sum(is.na(suicides_rate))) %>% left_join(world, by = c("country" = "region")) %>%  
+worldmap + data %>% group_by(country, year) %>% summarise(n = sum(is.na(suicides_rate))/12) %>% left_join(world, by = c("country" = "region")) %>%  
   geom_polygon(data = ., aes(fill = n))  + 
   scale_fill_viridis_c(trans = "log2", name = "Years of missing data", 
                        guide = guide_colorbar(title.position = "top", 
@@ -311,7 +315,7 @@ There is no noticable trend
 
 ### Rate of suicides per country
 
-```{r message=TRUE, warning=TRUE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
 
 rate %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
@@ -334,7 +338,7 @@ rate %>%
 
 ### Top recorded suicides rate in each year with barplot
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 (rate %>% ungroup() %>%
   group_by(year) %>% 
   top_n(n = 5, wt = suicides_rate) %>% 
@@ -356,24 +360,17 @@ rate %>%
 
 ### Recorded suicides rate in each year with map
 
-```{r fig.height=8, fig.width=12}
-
-ggplot() + 
- #  borders(fill = "#f2f2f2") +
+```{r fig.height=8, fig.width=12, message=FALSE, warning=FALSE}
+(worldmap +
    geom_polygon(data = rate %>%
                   left_join(world, by = c("country" = "region")) %>% 
                   filter(!is.na(suicides_rate)),
-                aes(fill = suicides_rate, x = long, y = lat, group = group))  + 
+                aes(fill = suicides_rate))  + 
    scale_fill_viridis_c(name = "Suicides rate", 
                        guide = guide_colorbar(title.position = "top", 
                                               direction = "horizontal"),
                        na.value  = "#f2f2f2") +
-  theme(panel.background = element_blank(),
-        axis.title = element_blank(),
-        axis.line.x = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.position = "bottom",
+  theme(legend.position = "bottom",
         legend.key.width = unit(5,"cm"),
         plot.title = element_text(size = 20, face = "bold", color = "#222222"),
         legend.text = element_text(size = 10, face = "bold", color = "#222222"),
@@ -381,16 +378,14 @@ ggplot() +
         legend.title.align = 0.5,
         panel.grid = element_blank(),
         plot.margin = margin(15,1,1,1)) +
-  coord_fixed(1.2) +
   labs(title = "Suicide rate in {closest_state}")+
-  transition_states(year)
+  transition_states(year)) %>% 
+  animate(duration = 20, height = 800, width = 1200)
 
 ```
 
 
-+
-  transition_states(year)) %>% 
-  animate(duration = 20, height = 800, width = 1200)
+
 
 ### Top 10 biggest increase in suicide rate in 1 year all time
 
@@ -414,7 +409,7 @@ Based on this, more information can be obtained to get a further insight of the 
 
 ### Biggest changes
 
-```{r message=TRUE, warning=TRUE}
+```{r message=FALSE, warning=FALSE}
 
 (ggplot(data = rate %>% filter(country %in% (rate %>% group_by(country) %>% 
   filter(!is.na(suicides_rate)) %>% 
