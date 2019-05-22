@@ -28,12 +28,15 @@ theme_set(theme_minimal())
 
 # Load data ------------------
 
-```{r}
+```{r message=FALSE}
 data <- read_csv("data/master.csv")
 data <- data %>% rename(HDI = `HDI for year`,
                         suicides_rate = `suicides/100k pop`,
                         gdp_yearly = `gdp_for_year ($)`,
                         gdp_capita = `gdp_per_capita ($)`)
+data$age <- factor(data$age, levels = c("5-14 years", "15-24 years", 
+                                        "25-34 years", "35-54 years", 
+                                        "55-74 years", "75+ years"))
 ```
 
 # Load extra data for worldmaps and statistics
@@ -72,32 +75,15 @@ worldmap <- ggplot(data = world, aes(long, lat, group = group)) + geom_polygon(f
 
 
 
-## For statistics
-
-- Get area
-
-- Get continents
-
-- Get country codes
-
-Might not be a good idea 
+## Add EU
 
 ```{r}
-# library(wbstats)
 
-# wbcountries() %>% view()
+eu <- read_csv("data/listofeucountries.csv") %>% pull(x)
 
-# Searching area indicator in the database
-# wbsearch(pattern = "area") 
+eu <- replace(eu, eu == "Slovak Republic", "Slovakia")
 
-#wb <- wb(country = "all", indicator = "AG.SRF.TOTL.K2", startdate = 1985, enddate = 2016) %>% 
- # rename(year = date) %>% 
-#  mutate(year = as.numeric(year))
-#temp <- left_join(countrystat, wb, by = c("country" = "country", "year" = "year"))
-
-#countries <- wbcountries()
-
-#temp %>% filter(is.na(iso3c)) %>% view()
+data <- data %>% mutate(EU = ifelse(country %in% eu, T, F))
 
 ```
 
@@ -143,7 +129,7 @@ There are:
 
 ## Extract country stats
 
-HDI, GDP per year and per capital are values based on country so it makes sense to extract those values into another 
+HDI, GDP per year and per capital are values based on country so it would make sense to extract those values into another 
 dataframe
 
 ```{r}
@@ -547,21 +533,24 @@ data %>% group_by(country, year, sex) %>%
 ```{r}
 data %>% group_by(year, age) %>% 
   summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
-  ggplot(aes(year, suicides_no, color = age)) + 
-  geom_line() + 
-  theme(legend.position = "none")
+  ggplot(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) + 
+  geom_line() +
+  scale_color_discrete(name = "Age group")
 ```
+
+Number of suicides in 35-54 age group is the biggest due to large population proportion, in the next graph, age group 75+ actually has the highest suicide rate
 
 ### Rate of suicides each age group in the world
 
 ```{r}
 data %>% group_by(year, age) %>% 
   summarise(suicides_rate = sum(suicides_no, na.rm = T)/sum(population, na.rm = T) * 1e5) %>% 
-  ggplot(aes(year, suicides_rate, color = age)) + 
-  geom_line() + 
-  theme(legend.position = "none")
+  ggplot(aes(year, suicides_rate, color = fct_reorder2(age, year, suicides_rate))) + 
+  geom_line() +
+  scale_color_discrete(name = "Age group")
 
 ```
+
 
 ### Number of suicides by age group each year in every country
 
@@ -569,7 +558,16 @@ data %>% group_by(year, age) %>%
 data %>% group_by(country, year, age) %>% 
   summarise(suicides_no = sum(suicides_no)) %>% 
   ggplot(aes(year, suicides_no, color = country)) + 
-  geom_line() + facet_wrap(~ age) +
+  geom_line() +
+  geom_text_repel(data = data %>% 
+              group_by(country, year, age) %>% 
+              summarise(suicides_no = sum(suicides_no)) %>% 
+              filter(year == 2000) %>% 
+              ungroup() %>% 
+              group_by(age, year) %>% 
+              top_n(3,suicides_no),
+            aes(label = country))+
+  facet_wrap(~ age) +
   theme(legend.position = "none")
 
 ```
@@ -578,8 +576,8 @@ data %>% group_by(country, year, age) %>%
 
 ```{r}
 data %>% group_by(country, year, age) %>% 
-  summarise(suicides_no = sum(suicides_no)) %>% 
-  ggplot(aes(year, suicides_no, color = country)) + 
+  summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_wrap(~ age) +
   theme(legend.position = "none")
 
