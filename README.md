@@ -259,7 +259,7 @@ Plot on map
                                                   direction = "horizontal",
                                                   nbin = 10)) +
       labs(title = "Missing data map", subtitle = "Since 1985") +
-      theme(legend.position = c(0.1,.1),
+      theme(legend.position = c(0,.1),
             legend.justification = "left",
             legend.key.width = unit(3,"cm"),
             panel.grid = element_blank(),
