@@ -41,7 +41,6 @@ data$age <- factor(data$age, levels = c("5-14 years", "15-24 years",
 
 # Load extra data for worldmaps and statistics
 
-
 ## Load world map
 
 ```{r}
@@ -77,13 +76,11 @@ worldmap <- ggplot(data = world, aes(long, lat, group = group)) + geom_polygon(f
 
 ## Add EU
 
-```{r}
+```{r message=FALSE}
 
 eu <- read_csv("data/listofeucountries.csv") %>% pull(x)
 
 eu <- replace(eu, eu == "Slovak Republic", "Slovakia")
-
-data <- data %>% mutate(EU = ifelse(country %in% eu, T, F))
 
 ```
 
@@ -252,22 +249,6 @@ Compare to Wiki
 - Generation Z birth year is from 1990s till now
 
 There is no big discrepancy between data set and Wiki, no outliner either, so it is safe to assume that there is no mistake in our data.
-
-# Combines with other data
-
-```{r}
-
-
-
-```
-
-
-Continents
-
-Country size so we can calculate population/area
-
-map package?
-
 
 # Analyze
 
@@ -476,11 +457,6 @@ worldmap + rate %>% filter(year >= 2010 & year < 2016) %>%
   geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
 ```
 
-## EU
-
-
-
-
 ## Gender
 
 ### Number of suicides by gender each year in the world
@@ -581,6 +557,248 @@ data %>% group_by(country, year, age) %>%
   geom_line() + facet_wrap(~ age) +
   theme(legend.position = "none")
 
+```
+
+### Rate of suicides by age group and sex
+
+```{r}
+data %>% group_by(country, year, age, sex) %>% 
+  summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
+  geom_line() + facet_grid(age ~ sex)+
+  theme(legend.position = "none")
+```
+
+
+## EU
+
+EU background map
+
+```{r}
+EUmap <- ggplot(data = world %>% 
+                  filter(region %in% eu), aes(long, lat, group = group)) + geom_polygon(fill = "#f2f2f2") +
+  theme(panel.background = element_blank(),
+                   axis.title = element_blank(),
+                   axis.line.x = element_blank(),
+                   axis.ticks = element_blank(),
+                   axis.text = element_blank()) +
+   coord_fixed(1.2)
+
+```
+
+Extract EU data
+
+```{r}
+EUrate <- data %>% 
+  filter(country %in% eu) %>% 
+  group_by(country, year) %>% 
+  summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
+  ungroup()
+```
+
+### Suicides rate per country per year of all recorded country visualized in boxplot.
+The number on top shows number of countries recorded in each year.
+
+
+```{r}
+EUrate %>%
+  filter(!is.na(suicides_rate)) %>% group_by(year) %>% mutate(n = n()) %>% 
+  ggplot(aes(x = factor(year))) +
+  geom_boxplot(aes(y = suicides_rate )) + 
+  geom_text(aes(label = n, y = 0.0006)) +
+  geom_line(data = rate %>% 
+              group_by(year) %>% 
+              summarise(suicides_rate = median(suicides_rate, na.rm = T)), 
+            aes(x= factor(year), y = suicides_rate, group = "The World"), color = "red", size = 1) +
+  geom_text(aes(factor(2010), 7, label = "The world median"), color = "red", size = 4) +
+  theme(axis.text.x = element_text(angle = 45))
+
+```
+
+EU has higher suicides rate than the world
+
+
+### Rate of suicides per country
+
+```{r message=FALSE, warning=FALSE}
+
+EUrate %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
+  geom_line() +
+  geom_text_repel(data = . %>% ungroup() %>%
+                    group_by(year) %>% 
+                    top_n(n = 5, wt = suicides_rate) %>%
+                    ungroup() %>% 
+                    complete(country, year),
+                  aes(label = country), hjust = 0,  
+                  segment.alpha = 0.2, xlim = c(2015,NA)) +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none") +
+  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
+  labs(title = "{round(frame_along)}") +
+  transition_reveal(year) 
+
+
+```
+
+### Top recorded suicides rate in each year with barplot
+
+```{r message=FALSE, warning=FALSE}
+(EUrate %>% ungroup() %>%
+  group_by(year) %>% 
+  top_n(n = 5, wt = suicides_rate) %>% 
+  mutate(rank = rank(-suicides_rate)) %>% 
+  ggplot(aes(rank, suicides_rate, fill = country)) + 
+  geom_col() +
+  geom_text(aes(label = country)) +
+  theme(legend.position = "none") +
+  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
+  scale_x_reverse() +
+  coord_flip() +
+  transition_states(year, transition_length = 2, state_length = 2) +
+  labs(title = "{closest_state}")+
+  enter_drift(x_mod = 6) + exit_drift(x_mod = -1)) %>% 
+  animate(nframes = 300, height = 800, width = 800 )
+
+```
+
+### Recorded suicides rate in each year with map
+
+```{r fig.height=8, fig.width=12, message=FALSE, warning=FALSE}
+(EUmap +
+   geom_polygon(data = EUrate %>%
+                  left_join(world, by = c("country" = "region")) %>% 
+                  filter(!is.na(suicides_rate)),
+                aes(fill = suicides_rate))  + 
+   scale_fill_viridis_c(name = "Suicides rate", 
+                       guide = guide_colorbar(title.position = "top", 
+                                              direction = "horizontal"),
+                       na.value  = "#f2f2f2") +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(5,"cm"),
+        plot.title = element_text(size = 20, face = "bold", color = "#222222"),
+        legend.text = element_text(size = 10, face = "bold", color = "#222222"),
+        legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+        legend.title.align = 0.5,
+        panel.grid = element_blank(),
+        plot.margin = margin(15,1,1,1)) +
+  labs(title = "Suicide rate in {closest_state}")+
+  transition_states(year)) %>% 
+  animate(duration = 20, height = 800, width = 1200)
+
+```
+
+
+
+
+### Top 10 biggest increase in suicide rate in 1 year all time
+
+```{r}
+EUrate %>% 
+  mutate(lag = suicides_rate - lag(suicides_rate)) %>% 
+  top_n(10, lag) %>% 
+  arrange(desc(lag))
+```
+
+### Top 10 biggest decrease in suicide rate in 1 year
+
+```{r paged.print=FALSE}
+EUrate %>% 
+  mutate(lag = suicides_rate - lag(suicides_rate)) %>% 
+  top_n(10, -lag) %>% 
+  arrange(lag)
+```
+
+Based on this, more information can be obtained to get a further insight of the events in these countries
+
+### Biggest changes
+
+```{r message=FALSE, warning=FALSE}
+
+(ggplot(data = EUrate %>% 
+          filter(country %in% 
+                   (EUrate %>% group_by(country) %>%
+                      filter(!is.na(suicides_rate)) %>% 
+                      summarise(delta = max(suicides_rate, na.rm = T) - min(suicides_rate, na.rm = T)) %>% 
+                      arrange(desc(delta)) %>% 
+                      top_n(5, delta) %>% pull(country))),
+        aes(year, suicides_rate, color = country)) + 
+  geom_line() +
+  geom_text_repel(aes(label = country), xlim = c(2020, NA), hjust = 0, segment.alpha = 0.2) +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none",
+        plot.margin = margin(2, 8, 2, 2, "cm")) +
+  labs(title = "Year: {round(frame_along)}") +
+  transition_reveal(year)) %>% 
+  animate(duration = 20, width = 1200, height = 800)
+
+
+```
+
+### Suicide rate by GDP
+
+```{r message=FALSE, warning=FALSE}
+EUrate %>% left_join(countrystat) %>% 
+  ggplot(aes(suicides_rate, gdp_capita)) + geom_point()
+
+```
+
+There is no indication of a relationship between them
+
+### Rate of suicides by gender each year in the EU
+
+```{r}
+data %>%  
+  group_by(year, sex) %>% 
+  summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5) %>% 
+  ggplot(aes(year, suicides_no, color = sex)) + 
+  geom_line(aes(linetype = "Worldwide")) +
+  geom_line(data = data %>% 
+              filter(country  %in% eu) %>% 
+              group_by(year, sex) %>% 
+              summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5), aes(linetype = "EU")) +
+  scale_linetype_manual(name = "Region" ,values = c("Worldwide" = 2, "EU" = 1))
+
+#+ 
+  theme(legend.position = "none")
+```
+
+### Rate of suicides by gender each year in every country
+
+```{r}
+data %>% 
+  filter(country %in% eu) %>% 
+  group_by(country, year, sex) %>% 
+  summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
+  geom_line() + facet_wrap(~sex) +
+  theme(legend.position = "none")
+
+```
+
+### Rate of suicides by age group each year in every country
+
+```{r}
+data %>% 
+  filter(country %in% eu) %>% 
+  group_by(country, year, age) %>% 
+  summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
+  geom_line() + facet_wrap(~ age) +
+  theme(legend.position = "none")
+
+```
+
+### Rate of suicides by age group and sex
+
+```{r}
+data %>% 
+  filter(country %in% eu) %>% 
+  group_by(country, year, age, sex) %>% 
+  summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+  ggplot(aes(year, suicides_rate, color = country)) + 
+  geom_line() + facet_grid(age ~ sex)+
+  theme(legend.position = "none")
 ```
 
 ## Finland
