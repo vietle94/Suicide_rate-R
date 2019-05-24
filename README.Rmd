@@ -23,7 +23,24 @@ library(gganimate)
 library(ggrepel)
 library(maps)
 
-theme_set(theme_minimal())
+theme_set(theme_minimal() +
+            theme(panel.background = element_blank(),
+                  plot.title = element_text(size = 28,
+                                            face = "bold",
+                                            color = "#222222"),
+                  plot.subtitle = ggplot2::element_text(size=22,
+                                                        margin=ggplot2::margin(9,0,9,0)),
+                  legend.text.align = 0,
+                  legend.background = ggplot2::element_blank(),
+                  legend.key = ggplot2::element_blank(),
+                  legend.text = ggplot2::element_text(size=10,
+                                                      color="#222222"),
+                  axis.text = ggplot2::element_text(size=10,
+                                                    color="#222222"),
+                  axis.text.x = ggplot2::element_text(margin=ggplot2::margin(5, b = 10),
+                                                      vjust = 0.5, size = 10),
+                  axis.text.y = ggplot2::element_text(margin=ggplot2::margin(5, b = 10), 
+                                                      vjust = 0.5, size = 10)))
 ```
 
 # Load data ------------------
@@ -174,21 +191,30 @@ data %>% group_by(country, year) %>% summarise(avg_rate = mean(suicides_rate)) %
 Plot on map
 
 
-```{r}
+```{r fig.height=12, fig.width=8}
 
-worldmap + data %>% group_by(country, year) %>% summarise(n = sum(is.na(suicides_rate))/12) %>% left_join(world, by = c("country" = "region")) %>%  
+worldmap + data %>% 
+  group_by(country, year) %>% 
+  summarise(n = sum(is.na(suicides_rate))/12) %>%
+  ungroup()  %>% 
+  group_by(country) %>% 
+  summarise(n = sum(n)) %>% 
+  left_join(world, by = c("country" = "region")) %>%  
   geom_polygon(data = ., aes(fill = n))  + 
   scale_fill_viridis_c(trans = "log2", name = "Years of missing data", 
                        guide = guide_colorbar(title.position = "top", 
                                               direction = "horizontal",
                                               nbin = 10)) +
-  labs(title = "Missing data map") +
-  theme(legend.position = c(.25,.2),
-        legend.justification = "right",
-        plot.title = element_text(size = 20,
-                                  face = "bold",
-                                  color = "#222222"),
-        panel.grid = element_blank())
+  labs(title = "Missing data map", subtitle = "Since 1985") +
+  theme(legend.position = c(0.1,.1),
+        legend.justification = "left",
+        legend.key.width = unit(3,"cm"),
+        panel.grid = element_blank(),
+        axis.text = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank(),
+        legend.title.align = 0.5,
+        legend.title = element_text(face = "bold"))
 ```
 
 Most of the data are from Russia, America nand Europe. There are some countries that have a lot of missing data
@@ -202,7 +228,8 @@ data %>%
   ggplot(aes(year, country, group = country)) + 
   geom_tile() + 
   theme( panel.grid = element_blank()) +
-  scale_x_continuous(expand = c(0,0))
+  scale_x_continuous(expand = c(0,0)) + 
+  labs(title = "Pattern of missing data")
 ```
 
 There are a lot of random missing data through out the years
@@ -214,8 +241,10 @@ data %>% filter(!is.na(generation)) %>%
   separate(age, into =c("min", "max")) %>% mutate(max = ifelse(max== "years", 100, max)) %>% 
   mutate(min = as.integer(min), max = as.integer(max)) %>% 
   mutate(min = year - min, max = year - max) %>% 
-  ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) + geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
-  scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + ylab("Birth year")
+  ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) +
+  geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
+  scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + 
+  labs(title = "Birth year of all generations", y = "Birth year", x = "Generations")
 ```
 
 - Since Age values are not provided but put in the age range, we can only estimate the actual year birth.
@@ -273,8 +302,9 @@ rate %>%
   filter(!is.na(suicides_rate)) %>% group_by(year) %>% mutate(n = n()) %>% 
   ggplot(aes(x = factor(year))) +
   geom_boxplot(aes(y = suicides_rate )) + 
-  geom_text(aes(label = n, y = 0.0006)) +
-  theme(axis.text.x = element_text(angle = 45))
+  geom_text(aes(label = n, y = 55)) +
+  theme(axis.text.x = element_text(angle = 45)) +
+  labs(title = "Distribution of suicide rate of all country", subtitle = "Since 1985" , y = "Suicide rate", x = "Year")
 
 ```
 
@@ -295,15 +325,15 @@ rate %>%
                   aes(label = country), hjust = 0,  
                   segment.alpha = 0.2, xlim = c(2015,NA)) +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") +
-  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
-  labs(title = "{round(frame_along)}") +
+  theme(legend.position = "none",
+        plot.margin = margin(1,4,1,1, "cm")) +
+  labs(title = "Rate of suicides", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
   transition_reveal(year) 
 
 
 ```
 
-### Top recorded suicides rate in each year with barplot
+### Top recorded suicide rate in each year with barplot
 
 ```{r message=FALSE, warning=FALSE}
 (rate %>% ungroup() %>%
@@ -312,16 +342,19 @@ rate %>%
   mutate(rank = rank(-suicides_rate)) %>% 
   ggplot(aes(rank, suicides_rate, fill = country)) + 
   geom_col() +
-  geom_text(aes(label = country)) +
-  theme(legend.position = "none") +
-  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
+  geom_label(aes(label = country ),fill = "white") +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20)) +
   scale_x_reverse() +
   coord_flip() +
   transition_states(year, transition_length = 2, state_length = 2) +
-  labs(title = "{closest_state}")+
+  labs(subtitle = "in {closest_state}", title = "Top recorded suicide rate", y = "Suicide rate")+
   enter_drift(x_mod = -1) + exit_drift(x_mod = 1)) %>% 
   animate(nframes = 300, height = 800, width = 800 )
-
 
 ```
 
@@ -339,13 +372,13 @@ rate %>%
                        na.value  = "#f2f2f2") +
   theme(legend.position = "bottom",
         legend.key.width = unit(5,"cm"),
-        plot.title = element_text(size = 20, face = "bold", color = "#222222"),
-        legend.text = element_text(size = 10, face = "bold", color = "#222222"),
         legend.title = element_text(size = 20, face = "bold", color = "#222222"),
         legend.title.align = 0.5,
         panel.grid = element_blank(),
-        plot.margin = margin(15,1,1,1)) +
-  labs(title = "Suicide rate in {closest_state}")+
+        plot.margin = margin(15,1,1,1),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  labs(subtitle = "in {closest_state}", title = "Suicide rate worldwide")+
   transition_states(year)) %>% 
   animate(duration = 20, height = 800, width = 1200)
 
@@ -387,19 +420,20 @@ Based on this, more information can be obtained to get a further insight of the 
   geom_text_repel(aes(label = country), xlim = c(2020, NA), hjust = 0, segment.alpha = 0.2) +
   coord_cartesian(clip = "off") +
   theme(legend.position = "none",
-        plot.margin = margin(2, 8, 2, 2, "cm")) +
-  labs(title = "Year: {round(frame_along)}") +
+        plot.margin = margin(1, 3.5, 1, 1, "cm")) +
+  labs(title = "Top changes in rate of suicide", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
   transition_reveal(year)) %>% 
-  animate(duration = 20, width = 1200, height = 800)
-
+  animate(duration = 20)
 
 ```
 
 ### Suicide rate by GDP
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 rate %>% left_join(countrystat) %>% 
-  ggplot(aes(suicides_rate, gdp_capita)) + geom_point()
+  ggplot(aes(suicides_rate, gdp_capita)) + 
+  geom_point() +
+  labs(y = "GDP per capita", x = "Suicide rate", title = "Suicide rate by GDP", subtitle = "Since 1985")
 
 ```
 
@@ -430,9 +464,9 @@ n_suicides %>%
                   aes(label = country ), xlim = c(2015,NA), hjust = 0,
                   segment.alpha = 0.2) + 
   coord_cartesian(clip = 'off') +
-  theme(legend.position = "none")  +
-  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
-  labs(title = "Year: {round(frame_along)}") +
+  theme(legend.position = "none",  
+        plot.margin = margin(1,4,1,1, "cm")) +
+  labs(title = "Number of suicides", subtitle = "in {round(frame_along)}", x = "Year", y = "Number of rate") +
   transition_reveal(year)
 
 ```
@@ -441,20 +475,47 @@ n_suicides %>%
 
 Total number of people suicide since 2010
 
-```{r}
+```{r fig.height=8, fig.width=12}
 worldmap + data %>% filter(year >= 2010 & year < 2016) %>%
-  group_by(country) %>% summarise(n = sum(suicides_no, na.rm = T)) %>% filter(!is.na(n)) %>% 
+  group_by(country) %>% 
+  summarise(n = sum(suicides_no, na.rm = T)) %>%
+  filter(!is.na(n)) %>%
   left_join(world, by = c("country" = "region")) %>%  
-  geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
+  geom_polygon(data = ., aes(fill = n))  + 
+  scale_fill_viridis_c(name = "Number of suicides",
+                       trans = "log10",
+                       guide = guide_colorbar(title.position = "top", 
+                                              direction = "horizontal")) +
+  labs(title = "Total number of people suicide", subtitle = "Since 2010") +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(5,"cm"),
+        legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+        legend.title.align = 0.5,
+        panel.grid = element_blank(),
+        plot.margin = margin(15,1,1,1),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank())
 ```
 
 ### Average rate of people suicide since 2010
 
-```{r}
+```{r fig.height=8, fig.width=12}
 worldmap + rate %>% filter(year >= 2010 & year < 2016) %>%
   group_by(country) %>% summarise(n = mean(suicides_rate, na.rm = T)) %>% filter(!is.na(n)) %>% 
   left_join(world, by = c("country" = "region")) %>%  
-  geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
+  geom_polygon(data = ., aes(fill = n))  + 
+  scale_fill_viridis_c(name = "Average number of suicides",
+                       guide = guide_colorbar(title.position = "top", 
+                                              direction = "horizontal")) +
+  labs(title = "Average number of people suicide", subtitle = "Since 2010") +
+  theme(legend.position = "bottom",
+        legend.key.width = unit(5,"cm"),
+        legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+        legend.title.align = 0.5,
+        panel.grid = element_blank(),
+        plot.margin = margin(15,1,1,1),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank())
 ```
 
 ## Gender
@@ -466,7 +527,8 @@ data %>% group_by(year, sex) %>%
   summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
   ggplot(aes(year, suicides_no, color = sex)) + 
   geom_line() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Number of suicide worldwide", x = "Year", y = "Suicide number", subtitle = "since 1985")
 ```
 
 ### Rate of suicides by gender each year in the world
@@ -476,7 +538,8 @@ data %>% group_by(year, sex) %>%
   summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5) %>% 
   ggplot(aes(year, suicides_no, color = sex)) + 
   geom_line() + 
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Rate of suicide worldwide", x = "Year", y = "Suicide rate", subtitle = "since 1985")
 ```
 
 ### Number of suicides by gender each year in every country
@@ -486,7 +549,9 @@ data %>% group_by(country, year, sex) %>%
   summarise(suicides_no = sum(suicides_no)) %>% 
   ggplot(aes(year, suicides_no, color = country)) + 
   geom_line() + facet_wrap(~sex) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Number of suicides by gender", subtitle = "Since 1985", x = "Year",
+       y = "Number of suicide")
 
 ```
 
@@ -498,7 +563,10 @@ data %>% group_by(country, year, sex) %>%
   summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_wrap(~sex) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +  
+  labs(title = "Rate of suicides by gender", subtitle = "Since 1985", x = "Year",
+       y = "Rate of suicide")
+  
 
 ```
 
@@ -511,7 +579,9 @@ data %>% group_by(year, age) %>%
   summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
   ggplot(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) + 
   geom_line() +
-  scale_color_discrete(name = "Age group")
+  scale_color_discrete(name = "Age group") +
+  labs(title = "Number of suicides each age group", subtitle = "Since 1985", x = "Year",
+       y = "Number of suicides")
 ```
 
 Number of suicides in 35-54 age group is the biggest due to large population proportion, in the next graph, age group 75+ actually has the highest suicide rate
@@ -523,7 +593,9 @@ data %>% group_by(year, age) %>%
   summarise(suicides_rate = sum(suicides_no, na.rm = T)/sum(population, na.rm = T) * 1e5) %>% 
   ggplot(aes(year, suicides_rate, color = fct_reorder2(age, year, suicides_rate))) + 
   geom_line() +
-  scale_color_discrete(name = "Age group")
+  scale_color_discrete(name = "Age group") +
+  labs(title = "Rate of suicides each age group", subtitle = "Since 1985", x = "Year",
+       y = "Rate of suicides")
 
 ```
 
@@ -544,7 +616,9 @@ data %>% group_by(country, year, age) %>%
               top_n(3,suicides_no),
             aes(label = country))+
   facet_wrap(~ age) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Number of suicides by age group", subtitle = "Since 1985",
+       x = "Year", y = "Number of suicides")
 
 ```
 
@@ -555,18 +629,22 @@ data %>% group_by(country, year, age) %>%
   summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_wrap(~ age) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Rate of suicides by age group", subtitle = "Since 1985",
+       x = "Year", y = "Rate of suicides")
 
 ```
 
 ### Rate of suicides by age group and sex
 
-```{r}
+```{r fig.height=12, fig.width=8}
 data %>% group_by(country, year, age, sex) %>% 
   summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_grid(age ~ sex)+
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Number of suicides by age and sex", subtitle = "Since 1985",
+       x = "Year", y = "Number of suicides")
 ```
 
 
@@ -611,7 +689,8 @@ EUrate %>%
               summarise(suicides_rate = median(suicides_rate, na.rm = T)), 
             aes(x= factor(year), y = suicides_rate, group = "The World"), color = "red", size = 1) +
   geom_text(aes(factor(2010), 7, label = "The world median"), color = "red", size = 4) +
-  theme(axis.text.x = element_text(angle = 45))
+  theme(axis.text.x = element_text(angle = 45)) +
+  labs(title = "Distribution of suicide rate of all country", subtitle = "Since 1985 in EU" , y = "Suicide rate", x = "Year")
 
 ```
 
@@ -633,9 +712,9 @@ EUrate %>%
                   aes(label = country), hjust = 0,  
                   segment.alpha = 0.2, xlim = c(2015,NA)) +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") +
-  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
-  labs(title = "{round(frame_along)}") +
+  theme(legend.position = "none",
+        plot.margin = margin(1,4,1,1, "cm")) +
+  labs(title = "Rate of suicides in EU", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
   transition_reveal(year) 
 
 
@@ -650,13 +729,17 @@ EUrate %>%
   mutate(rank = rank(-suicides_rate)) %>% 
   ggplot(aes(rank, suicides_rate, fill = country)) + 
   geom_col() +
-  geom_text(aes(label = country)) +
-  theme(legend.position = "none") +
-  theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
+  geom_label(aes(label = country ),fill = "white") +
+  theme(legend.position = "none",
+        panel.grid = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20)) +
   scale_x_reverse() +
   coord_flip() +
   transition_states(year, transition_length = 2, state_length = 2) +
-  labs(title = "{closest_state}")+
+  labs(subtitle = "in {closest_state}", title = "Top recorded suicide rate", y = "Suicide rate") +
   enter_drift(x_mod = 6) + exit_drift(x_mod = -1)) %>% 
   animate(nframes = 300, height = 800, width = 800 )
 
@@ -676,13 +759,13 @@ EUrate %>%
                        na.value  = "#f2f2f2") +
   theme(legend.position = "bottom",
         legend.key.width = unit(5,"cm"),
-        plot.title = element_text(size = 20, face = "bold", color = "#222222"),
-        legend.text = element_text(size = 10, face = "bold", color = "#222222"),
         legend.title = element_text(size = 20, face = "bold", color = "#222222"),
         legend.title.align = 0.5,
         panel.grid = element_blank(),
-        plot.margin = margin(15,1,1,1)) +
-  labs(title = "Suicide rate in {closest_state}")+
+        plot.margin = margin(15,1,1,1),
+        axis.text.x = element_blank(),
+        axis.text.y = element_blank()) +
+  labs(subtitle = "in {closest_state}", title = "Suicide rate in EU") +
   transition_states(year)) %>% 
   animate(duration = 20, height = 800, width = 1200)
 
@@ -727,10 +810,11 @@ Based on this, more information can be obtained to get a further insight of the 
   geom_text_repel(aes(label = country), xlim = c(2020, NA), hjust = 0, segment.alpha = 0.2) +
   coord_cartesian(clip = "off") +
   theme(legend.position = "none",
-        plot.margin = margin(2, 8, 2, 2, "cm")) +
-  labs(title = "Year: {round(frame_along)}") +
+        plot.margin = margin(1, 3.5, 1, 1, "cm")) +
+  labs(title = "Top changes in rate of suicide", subtitle = "in {round(frame_along)} in EU", x = "Year", 
+       y = "Suicide rate") +
   transition_reveal(year)) %>% 
-  animate(duration = 20, width = 1200, height = 800)
+  animate(duration = 20)
 
 
 ```
@@ -739,7 +823,9 @@ Based on this, more information can be obtained to get a further insight of the 
 
 ```{r message=FALSE, warning=FALSE}
 EUrate %>% left_join(countrystat) %>% 
-  ggplot(aes(suicides_rate, gdp_capita)) + geom_point()
+  ggplot(aes(suicides_rate, gdp_capita)) + 
+  geom_point() +
+  labs(y = "GDP per capita", x = "Suicide rate", title = "Suicide rate by GDP in EU", subtitle = "Since 1985")
 
 ```
 
@@ -757,10 +843,10 @@ data %>%
               filter(country  %in% eu) %>% 
               group_by(year, sex) %>% 
               summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5), aes(linetype = "EU")) +
-  scale_linetype_manual(name = "Region" ,values = c("Worldwide" = 2, "EU" = 1))
+  scale_linetype_manual(name = "Region" ,values = c("Worldwide" = 2, "EU" = 1)) +
+  labs(title = "Rate of suicide by gender", subtitle = "Since 1985 in EU and worldwide",
+       x = "Year", y = "Rate of suicide")
 
-#+ 
-  theme(legend.position = "none")
 ```
 
 ### Rate of suicides by gender each year in every country
@@ -772,7 +858,9 @@ data %>%
   summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_wrap(~sex) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Rate of suicide by gender", subtitle = "Since 1985 in EU",
+       x = "Year", y = "Rate of suicide")
 
 ```
 
@@ -785,20 +873,24 @@ data %>%
   summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_wrap(~ age) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Rate of suicide by age", subtitle = "Since 1985 in EU",
+       x = "Year", y = "Rate of suicide")
 
 ```
 
 ### Rate of suicides by age group and sex
 
-```{r}
+```{r fig.height=12, fig.width=8}
 data %>% 
   filter(country %in% eu) %>% 
   group_by(country, year, age, sex) %>% 
   summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
   ggplot(aes(year, suicides_rate, color = country)) + 
   geom_line() + facet_grid(age ~ sex)+
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  labs(title = "Rate of suicide by age and sex", subtitle = "Since 1985 in EU",
+       x = "Year", y = "Rate of suicide")
 ```
 
 ## Finland
@@ -810,7 +902,9 @@ data %>% filter(country == "Finland") %>%
   filter(!is.na(suicides_no)) %>% 
   ggplot() + geom_point(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) +
   geom_line(aes(year, suicides_no, colour = age)) + facet_wrap(~sex) +
-  scale_color_discrete(name = "Age group")
+  scale_color_discrete(name = "Age group") +
+  labs(title = "Number of suicides by sex", subtitle = "in Finland",
+       x = "Year", y = "Number of suicides")
 
 ```
 
@@ -821,7 +915,9 @@ data %>% filter(country == "Finland") %>%
   filter(!is.na(suicides_no)) %>% 
   ggplot() + geom_point(aes(year, suicides_rate, color = fct_reorder2(age, year, suicides_rate))) +
   geom_line(aes(year, suicides_rate, colour = age)) + facet_wrap(~sex)+
-  scale_color_discrete(name = "Age group")
+  scale_color_discrete(name = "Age group") +
+  labs(title = "Rate of suicides by sex", subtitle = "in Finland",
+       x = "Year", y = "Rate of suicides")
 
 ```
 
@@ -833,7 +929,9 @@ data %>% filter(country == "Finland") %>%
   summarise(suicides_rate = sum(suicides_no)/sum(population)) %>% 
   ggplot() + geom_point(aes(year, suicides_rate, color = fct_reorder2(generation, year, suicides_rate))) +
   geom_line(aes(year, suicides_rate, colour = generation)) + facet_wrap(~sex)+
-  scale_color_discrete(name = "Genration")
+  scale_color_discrete(name = "Genration") +
+  labs(title = "Number of suicides by generation", subtitle = "in Finland",
+       x = "Year", y = "Number of suicides")
 
 ```
 

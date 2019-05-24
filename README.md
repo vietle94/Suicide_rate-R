@@ -8,33 +8,36 @@ Load library ——————
     library(ggrepel)
     library(maps)
 
-    theme_set(theme_minimal())
+    theme_set(theme_minimal() +
+                theme(panel.background = element_blank(),
+                      plot.title = element_text(size = 28,
+                                                face = "bold",
+                                                color = "#222222"),
+                      plot.subtitle = ggplot2::element_text(size=22,
+                                                            margin=ggplot2::margin(9,0,9,0)),
+                      legend.text.align = 0,
+                      legend.background = ggplot2::element_blank(),
+                      legend.key = ggplot2::element_blank(),
+                      legend.text = ggplot2::element_text(size=10,
+                                                          color="#222222"),
+                      axis.text = ggplot2::element_text(size=10,
+                                                        color="#222222"),
+                      axis.text.x = ggplot2::element_text(margin=ggplot2::margin(5, b = 10),
+                                                          vjust = 0.5, size = 10),
+                      axis.text.y = ggplot2::element_text(margin=ggplot2::margin(5, b = 10), 
+                                                          vjust = 0.5, size = 10)))
 
 Load data ——————
 ================
 
     data <- read_csv("data/master.csv")
-
-    ## Parsed with column specification:
-    ## cols(
-    ##   country = col_character(),
-    ##   year = col_double(),
-    ##   sex = col_character(),
-    ##   age = col_character(),
-    ##   suicides_no = col_double(),
-    ##   population = col_double(),
-    ##   `suicides/100k pop` = col_double(),
-    ##   `country-year` = col_character(),
-    ##   `HDI for year` = col_double(),
-    ##   `gdp_for_year ($)` = col_number(),
-    ##   `gdp_per_capita ($)` = col_double(),
-    ##   generation = col_character()
-    ## )
-
     data <- data %>% rename(HDI = `HDI for year`,
                             suicides_rate = `suicides/100k pop`,
                             gdp_yearly = `gdp_for_year ($)`,
                             gdp_capita = `gdp_per_capita ($)`)
+    data$age <- factor(data$age, levels = c("5-14 years", "15-24 years", 
+                                            "25-34 years", "35-54 years", 
+                                            "55-74 years", "75+ years"))
 
 Load extra data for worldmaps and statistics
 ============================================
@@ -66,32 +69,12 @@ Draw world map
                        axis.text = element_blank()) +
        coord_fixed(1.2)
 
-For statistics
---------------
+Add EU
+------
 
--   Get area
+    eu <- read_csv("data/listofeucountries.csv") %>% pull(x)
 
--   Get continents
-
--   Get country codes
-
-Might not be a good idea
-
-    # library(wbstats)
-
-    # wbcountries() %>% view()
-
-    # Searching area indicator in the database
-    # wbsearch(pattern = "area") 
-
-    #wb <- wb(country = "all", indicator = "AG.SRF.TOTL.K2", startdate = 1985, enddate = 2016) %>% 
-     # rename(year = date) %>% 
-    #  mutate(year = as.numeric(year))
-    #temp <- left_join(countrystat, wb, by = c("country" = "country", "year" = "year"))
-
-    #countries <- wbcountries()
-
-    #temp %>% filter(is.na(iso3c)) %>% view()
+    eu <- replace(eu, eu == "Slovak Republic", "Slovakia")
 
 Data Exploratory ———————–
 =========================
@@ -191,7 +174,7 @@ Extract country stats
 ---------------------
 
 HDI, GDP per year and per capital are values based on country so it
-makes sense to extract those values into another dataframe
+would make sense to extract those values into another dataframe
 
     countrystat <- data %>% select(country, year, gdp_yearly, gdp_capita, HDI) %>% 
       distinct()
@@ -263,21 +246,28 @@ Let’s find out how many missing data with each country each year
 
 Plot on map
 
-    worldmap + data %>% group_by(country, year) %>% summarise(n = sum(is.na(suicides_rate))/12) %>% left_join(world, by = c("country" = "region")) %>%  
+    worldmap + data %>% 
+      group_by(country, year) %>% 
+      summarise(n = sum(is.na(suicides_rate))/12) %>%
+      ungroup()  %>% 
+      group_by(country) %>% 
+      summarise(n = sum(n)) %>% 
+      left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + 
       scale_fill_viridis_c(trans = "log2", name = "Years of missing data", 
                            guide = guide_colorbar(title.position = "top", 
                                                   direction = "horizontal",
                                                   nbin = 10)) +
-      labs(title = "Missing data map") +
-      theme(legend.position = c(.25,.2),
-            legend.justification = "right",
-            plot.title = element_text(size = 20,
-                                      face = "bold",
-                                      color = "#222222"),
-            panel.grid = element_blank())
-
-    ## Warning: Transformation introduced infinite values in discrete y-axis
+      labs(title = "Missing data map", subtitle = "Since 1985") +
+      theme(legend.position = c(0.1,.1),
+            legend.justification = "left",
+            legend.key.width = unit(3,"cm"),
+            panel.grid = element_blank(),
+            axis.text = element_blank(),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank(),
+            legend.title.align = 0.5,
+            legend.title = element_text(face = "bold"))
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-14-1.png)
 
@@ -293,7 +283,8 @@ Missing pattern
       ggplot(aes(year, country, group = country)) + 
       geom_tile() + 
       theme( panel.grid = element_blank()) +
-      scale_x_continuous(expand = c(0,0))
+      scale_x_continuous(expand = c(0,0)) + 
+      labs(title = "Pattern of missing data")
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-15-1.png)
 
@@ -306,8 +297,10 @@ What is generation’s age range?
       separate(age, into =c("min", "max")) %>% mutate(max = ifelse(max== "years", 100, max)) %>% 
       mutate(min = as.integer(min), max = as.integer(max)) %>% 
       mutate(min = year - min, max = year - max) %>% 
-      ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) + geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
-      scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + ylab("Birth year")
+      ggplot() + geom_jitter(aes(generation, min, color = "Max possible birth year"), alpha = 0.3) +
+      geom_jitter(aes(generation, max, color = "Min possible birth year"), alpha = 0.3) +
+      scale_color_manual(name = "", values = c("green", "red")) + theme(legend.position = "top") + 
+      labs(title = "Birth year of all generations", y = "Birth year", x = "Generations")
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-16-1.png)
 
@@ -345,15 +338,6 @@ Compare to Wiki
 There is no big discrepancy between data set and Wiki, no outliner
 either, so it is safe to assume that there is no mistake in our data.
 
-Combines with other data
-========================
-
-Continents
-
-Country size so we can calculate population/area
-
-map package?
-
 Analyze
 =======
 
@@ -375,10 +359,11 @@ The number on top shows number of countries recorded in each year.
       filter(!is.na(suicides_rate)) %>% group_by(year) %>% mutate(n = n()) %>% 
       ggplot(aes(x = factor(year))) +
       geom_boxplot(aes(y = suicides_rate )) + 
-      geom_text(aes(label = n, y = 0.0006)) +
-      theme(axis.text.x = element_text(angle = 45))
+      geom_text(aes(label = n, y = 55)) +
+      theme(axis.text.x = element_text(angle = 45)) +
+      labs(title = "Distribution of suicide rate of all country", subtitle = "Since 1985" , y = "Suicide rate", x = "Year")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-19-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-18-1.png)
 
 There is no noticable trend
 
@@ -395,14 +380,14 @@ There is no noticable trend
                       aes(label = country), hjust = 0,  
                       segment.alpha = 0.2, xlim = c(2015,NA)) +
       coord_cartesian(clip = "off") +
-      theme(legend.position = "none") +
-      theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
-      labs(title = "{round(frame_along)}") +
+      theme(legend.position = "none",
+            plot.margin = margin(1,4,1,1, "cm")) +
+      labs(title = "Rate of suicides", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
       transition_reveal(year) 
 
-![](README_files/figure-markdown_strict/unnamed-chunk-20-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-19-1.gif)
 
-### Top recorded suicides rate in each year with barplot
+### Top recorded suicide rate in each year with barplot
 
     (rate %>% ungroup() %>%
       group_by(year) %>% 
@@ -410,17 +395,21 @@ There is no noticable trend
       mutate(rank = rank(-suicides_rate)) %>% 
       ggplot(aes(rank, suicides_rate, fill = country)) + 
       geom_col() +
-      geom_text(aes(label = country)) +
-      theme(legend.position = "none") +
-      theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
+      geom_label(aes(label = country ),fill = "white") +
+      theme(legend.position = "none",
+            panel.grid = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 20),
+            axis.title.x = element_text(size = 20)) +
       scale_x_reverse() +
       coord_flip() +
       transition_states(year, transition_length = 2, state_length = 2) +
-      labs(title = "{closest_state}")+
+      labs(subtitle = "in {closest_state}", title = "Top recorded suicide rate", y = "Suicide rate")+
       enter_drift(x_mod = -1) + exit_drift(x_mod = 1)) %>% 
       animate(nframes = 300, height = 800, width = 800 )
 
-![](README_files/figure-markdown_strict/unnamed-chunk-21-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-20-1.gif)
 
 ### Recorded suicides rate in each year with map
 
@@ -435,17 +424,17 @@ There is no noticable trend
                            na.value  = "#f2f2f2") +
       theme(legend.position = "bottom",
             legend.key.width = unit(5,"cm"),
-            plot.title = element_text(size = 20, face = "bold", color = "#222222"),
-            legend.text = element_text(size = 10, face = "bold", color = "#222222"),
             legend.title = element_text(size = 20, face = "bold", color = "#222222"),
             legend.title.align = 0.5,
             panel.grid = element_blank(),
-            plot.margin = margin(15,1,1,1)) +
-      labs(title = "Suicide rate in {closest_state}")+
+            plot.margin = margin(15,1,1,1),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank()) +
+      labs(subtitle = "in {closest_state}", title = "Suicide rate worldwide")+
       transition_states(year)) %>% 
       animate(duration = 20, height = 800, width = 1200)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-22-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-21-1.gif)
 
 ### Top 10 biggest increase in suicide rate in 1 year all time
 
@@ -503,23 +492,21 @@ of the events in these countries
       geom_text_repel(aes(label = country), xlim = c(2020, NA), hjust = 0, segment.alpha = 0.2) +
       coord_cartesian(clip = "off") +
       theme(legend.position = "none",
-            plot.margin = margin(2, 8, 2, 2, "cm")) +
-      labs(title = "Year: {round(frame_along)}") +
+            plot.margin = margin(1, 3.5, 1, 1, "cm")) +
+      labs(title = "Top changes in rate of suicide", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
       transition_reveal(year)) %>% 
-      animate(duration = 20, width = 1200, height = 800)
+      animate(duration = 20)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-25-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-24-1.gif)
 
 ### Suicide rate by GDP
 
     rate %>% left_join(countrystat) %>% 
-      ggplot(aes(suicides_rate, gdp_capita)) + geom_point()
+      ggplot(aes(suicides_rate, gdp_capita)) + 
+      geom_point() +
+      labs(y = "GDP per capita", x = "Suicide rate", title = "Suicide rate by GDP", subtitle = "Since 1985")
 
-    ## Joining, by = c("country", "year")
-
-    ## Warning: Removed 927 rows containing missing values (geom_point).
-
-![](README_files/figure-markdown_strict/unnamed-chunk-26-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-25-1.png)
 
 There is no indication of a relationship between them
 
@@ -545,12 +532,12 @@ Prepare data
                       aes(label = country ), xlim = c(2015,NA), hjust = 0,
                       segment.alpha = 0.2) + 
       coord_cartesian(clip = 'off') +
-      theme(legend.position = "none")  +
-      theme(plot.margin = margin(2, 4, 2, 2, "cm")) +
-      labs(title = "Year: {round(frame_along)}") +
+      theme(legend.position = "none",  
+            plot.margin = margin(1,4,1,1, "cm")) +
+      labs(title = "Number of suicides", subtitle = "in {round(frame_along)}", x = "Year", y = "Number of rate") +
       transition_reveal(year)
 
-![](README_files/figure-markdown_strict/unnamed-chunk-28-1.gif)
+![](README_files/figure-markdown_strict/unnamed-chunk-27-1.gif)
 
 From 2010
 ---------
@@ -558,25 +545,49 @@ From 2010
 Total number of people suicide since 2010
 
     worldmap + data %>% filter(year >= 2010 & year < 2016) %>%
-      group_by(country) %>% summarise(n = sum(suicides_no, na.rm = T)) %>% filter(!is.na(n)) %>% 
+      group_by(country) %>% 
+      summarise(n = sum(suicides_no, na.rm = T)) %>%
+      filter(!is.na(n)) %>%
       left_join(world, by = c("country" = "region")) %>%  
-      geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
+      geom_polygon(data = ., aes(fill = n))  + 
+      scale_fill_viridis_c(name = "Number of suicides",
+                           trans = "log10",
+                           guide = guide_colorbar(title.position = "top", 
+                                                  direction = "horizontal")) +
+      labs(title = "Total number of people suicide", subtitle = "Since 2010") +
+      theme(legend.position = "bottom",
+            legend.key.width = unit(5,"cm"),
+            legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+            legend.title.align = 0.5,
+            panel.grid = element_blank(),
+            plot.margin = margin(15,1,1,1),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank())
 
     ## Warning: Transformation introduced infinite values in discrete y-axis
 
-![](README_files/figure-markdown_strict/unnamed-chunk-29-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-28-1.png)
 
 ### Average rate of people suicide since 2010
 
     worldmap + rate %>% filter(year >= 2010 & year < 2016) %>%
       group_by(country) %>% summarise(n = mean(suicides_rate, na.rm = T)) %>% filter(!is.na(n)) %>% 
       left_join(world, by = c("country" = "region")) %>%  
-      geom_polygon(data = ., aes(fill = n))  + scale_fill_viridis_c(trans = "log10")
+      geom_polygon(data = ., aes(fill = n))  + 
+      scale_fill_viridis_c(name = "Average number of suicides",
+                           guide = guide_colorbar(title.position = "top", 
+                                                  direction = "horizontal")) +
+      labs(title = "Average number of people suicide", subtitle = "Since 2010") +
+      theme(legend.position = "bottom",
+            legend.key.width = unit(5,"cm"),
+            legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+            legend.title.align = 0.5,
+            panel.grid = element_blank(),
+            plot.margin = margin(15,1,1,1),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank())
 
-![](README_files/figure-markdown_strict/unnamed-chunk-30-1.png)
-
-EU
---
+![](README_files/figure-markdown_strict/unnamed-chunk-29-1.png)
 
 Gender
 ------
@@ -587,9 +598,10 @@ Gender
       summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
       ggplot(aes(year, suicides_no, color = sex)) + 
       geom_line() + 
-      theme(legend.position = "none")
+      theme(legend.position = "none") +
+      labs(title = "Number of suicide worldwide", x = "Year", y = "Suicide number", subtitle = "since 1985")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-31-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-30-1.png)
 
 ### Rate of suicides by gender each year in the world
 
@@ -597,9 +609,10 @@ Gender
       summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5) %>% 
       ggplot(aes(year, suicides_no, color = sex)) + 
       geom_line() + 
-      theme(legend.position = "none")
+      theme(legend.position = "none") +
+      labs(title = "Rate of suicide worldwide", x = "Year", y = "Suicide rate", subtitle = "since 1985")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-32-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-31-1.png)
 
 ### Number of suicides by gender each year in every country
 
@@ -607,11 +620,13 @@ Gender
       summarise(suicides_no = sum(suicides_no)) %>% 
       ggplot(aes(year, suicides_no, color = country)) + 
       geom_line() + facet_wrap(~sex) +
-      theme(legend.position = "none")
+      theme(legend.position = "none") +
+      labs(title = "Number of suicides by gender", subtitle = "Since 1985", x = "Year",
+           y = "Number of suicide")
 
     ## Warning: Removed 807 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-33-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-32-1.png)
 
 ### Rate of suicides by gender each year in every country
 
@@ -619,11 +634,13 @@ Gender
       summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
       ggplot(aes(year, suicides_rate, color = country)) + 
       geom_line() + facet_wrap(~sex) +
-      theme(legend.position = "none")
+      theme(legend.position = "none") +  
+      labs(title = "Rate of suicides by gender", subtitle = "Since 1985", x = "Year",
+           y = "Rate of suicide")
 
     ## Warning: Removed 807 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-34-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-33-1.png)
 
 Age group
 ---------
@@ -632,47 +649,339 @@ Age group
 
     data %>% group_by(year, age) %>% 
       summarise(suicides_no = sum(suicides_no, na.rm = T)) %>% 
-      ggplot(aes(year, suicides_no, color = age)) + 
-      geom_line() + 
-      theme(legend.position = "none")
+      ggplot(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) + 
+      geom_line() +
+      scale_color_discrete(name = "Age group") +
+      labs(title = "Number of suicides each age group", subtitle = "Since 1985", x = "Year",
+           y = "Number of suicides")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-35-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-34-1.png)
+
+Number of suicides in 35-54 age group is the biggest due to large
+population proportion, in the next graph, age group 75+ actually has the
+highest suicide rate
 
 ### Rate of suicides each age group in the world
 
     data %>% group_by(year, age) %>% 
       summarise(suicides_rate = sum(suicides_no, na.rm = T)/sum(population, na.rm = T) * 1e5) %>% 
-      ggplot(aes(year, suicides_rate, color = age)) + 
-      geom_line() + 
-      theme(legend.position = "none")
+      ggplot(aes(year, suicides_rate, color = fct_reorder2(age, year, suicides_rate))) + 
+      geom_line() +
+      scale_color_discrete(name = "Age group") +
+      labs(title = "Rate of suicides each age group", subtitle = "Since 1985", x = "Year",
+           y = "Rate of suicides")
 
     ## Warning: Removed 1 rows containing missing values (geom_path).
 
-![](README_files/figure-markdown_strict/unnamed-chunk-36-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-35-1.png)
 
 ### Number of suicides by age group each year in every country
 
     data %>% group_by(country, year, age) %>% 
       summarise(suicides_no = sum(suicides_no)) %>% 
       ggplot(aes(year, suicides_no, color = country)) + 
+      geom_line() +
+      geom_text_repel(data = data %>% 
+                  group_by(country, year, age) %>% 
+                  summarise(suicides_no = sum(suicides_no)) %>% 
+                  filter(year == 2000) %>% 
+                  ungroup() %>% 
+                  group_by(age, year) %>% 
+                  top_n(3,suicides_no),
+                aes(label = country))+
+      facet_wrap(~ age) +
+      theme(legend.position = "none") +
+      labs(title = "Number of suicides by age group", subtitle = "Since 1985",
+           x = "Year", y = "Number of suicides")
+
+    ## Warning: Removed 759 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_strict/unnamed-chunk-36-1.png)
+
+### Rate of suicides by age group each year in every country
+
+    data %>% group_by(country, year, age) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
       geom_line() + facet_wrap(~ age) +
-      theme(legend.position = "none")
+      theme(legend.position = "none") +
+      labs(title = "Rate of suicides by age group", subtitle = "Since 1985",
+           x = "Year", y = "Rate of suicides")
 
     ## Warning: Removed 759 rows containing missing values (geom_path).
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-37-1.png)
 
-### Rate of suicides by age group each year in every country
+### Rate of suicides by age group and sex
 
-    data %>% group_by(country, year, age) %>% 
-      summarise(suicides_no = sum(suicides_no)) %>% 
-      ggplot(aes(year, suicides_no, color = country)) + 
-      geom_line() + facet_wrap(~ age) +
-      theme(legend.position = "none")
+    data %>% group_by(country, year, age, sex) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
+      geom_line() + facet_grid(age ~ sex)+
+      theme(legend.position = "none") +
+      labs(title = "Number of suicides by age and sex", subtitle = "Since 1985",
+           x = "Year", y = "Number of suicides")
 
     ## Warning: Removed 759 rows containing missing values (geom_path).
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-38-1.png)
+
+EU
+--
+
+EU background map
+
+    EUmap <- ggplot(data = world %>% 
+                      filter(region %in% eu), aes(long, lat, group = group)) + geom_polygon(fill = "#f2f2f2") +
+      theme(panel.background = element_blank(),
+                       axis.title = element_blank(),
+                       axis.line.x = element_blank(),
+                       axis.ticks = element_blank(),
+                       axis.text = element_blank()) +
+       coord_fixed(1.2)
+
+Extract EU data
+
+    EUrate <- data %>% 
+      filter(country %in% eu) %>% 
+      group_by(country, year) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
+      ungroup()
+
+### Suicides rate per country per year of all recorded country visualized in boxplot.
+
+The number on top shows number of countries recorded in each year.
+
+    EUrate %>%
+      filter(!is.na(suicides_rate)) %>% group_by(year) %>% mutate(n = n()) %>% 
+      ggplot(aes(x = factor(year))) +
+      geom_boxplot(aes(y = suicides_rate )) + 
+      geom_text(aes(label = n, y = 0.0006)) +
+      geom_line(data = rate %>% 
+                  group_by(year) %>% 
+                  summarise(suicides_rate = median(suicides_rate, na.rm = T)), 
+                aes(x= factor(year), y = suicides_rate, group = "The World"), color = "red", size = 1) +
+      geom_text(aes(factor(2010), 7, label = "The world median"), color = "red", size = 4) +
+      theme(axis.text.x = element_text(angle = 45)) +
+      labs(title = "Distribution of suicide rate of all country", subtitle = "Since 1985 in EU" , y = "Suicide rate", x = "Year")
+
+    ## Warning: Removed 1 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_strict/unnamed-chunk-41-1.png)
+
+EU has higher suicides rate than the world
+
+### Rate of suicides per country
+
+    EUrate %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
+      geom_line() +
+      geom_text_repel(data = . %>% ungroup() %>%
+                        group_by(year) %>% 
+                        top_n(n = 5, wt = suicides_rate) %>%
+                        ungroup() %>% 
+                        complete(country, year),
+                      aes(label = country), hjust = 0,  
+                      segment.alpha = 0.2, xlim = c(2015,NA)) +
+      coord_cartesian(clip = "off") +
+      theme(legend.position = "none",
+            plot.margin = margin(1,4,1,1, "cm")) +
+      labs(title = "Rate of suicides in EU", subtitle = "in {round(frame_along)}", x = "Year", y = "Suicide rate") +
+      transition_reveal(year) 
+
+![](README_files/figure-markdown_strict/unnamed-chunk-42-1.gif)
+
+### Top recorded suicides rate in each year with barplot
+
+    (EUrate %>% ungroup() %>%
+      group_by(year) %>% 
+      top_n(n = 5, wt = suicides_rate) %>% 
+      mutate(rank = rank(-suicides_rate)) %>% 
+      ggplot(aes(rank, suicides_rate, fill = country)) + 
+      geom_col() +
+      geom_label(aes(label = country ),fill = "white") +
+      theme(legend.position = "none",
+            panel.grid = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.x = element_text(size = 15),
+            axis.text.y = element_text(size = 20),
+            axis.title.x = element_text(size = 20)) +
+      scale_x_reverse() +
+      coord_flip() +
+      transition_states(year, transition_length = 2, state_length = 2) +
+      labs(subtitle = "in {closest_state}", title = "Top recorded suicide rate", y = "Suicide rate") +
+      enter_drift(x_mod = 6) + exit_drift(x_mod = -1)) %>% 
+      animate(nframes = 300, height = 800, width = 800 )
+
+![](README_files/figure-markdown_strict/unnamed-chunk-43-1.gif)
+
+### Recorded suicides rate in each year with map
+
+    (EUmap +
+       geom_polygon(data = EUrate %>%
+                      left_join(world, by = c("country" = "region")) %>% 
+                      filter(!is.na(suicides_rate)),
+                    aes(fill = suicides_rate))  + 
+       scale_fill_viridis_c(name = "Suicides rate", 
+                           guide = guide_colorbar(title.position = "top", 
+                                                  direction = "horizontal"),
+                           na.value  = "#f2f2f2") +
+      theme(legend.position = "bottom",
+            legend.key.width = unit(5,"cm"),
+            legend.title = element_text(size = 20, face = "bold", color = "#222222"),
+            legend.title.align = 0.5,
+            panel.grid = element_blank(),
+            plot.margin = margin(15,1,1,1),
+            axis.text.x = element_blank(),
+            axis.text.y = element_blank()) +
+      labs(subtitle = "in {closest_state}", title = "Suicide rate in EU") +
+      transition_states(year)) %>% 
+      animate(duration = 20, height = 800, width = 1200)
+
+![](README_files/figure-markdown_strict/unnamed-chunk-44-1.gif)
+
+### Top 10 biggest increase in suicide rate in 1 year all time
+
+    EUrate %>% 
+      mutate(lag = suicides_rate - lag(suicides_rate)) %>% 
+      top_n(10, lag) %>% 
+      arrange(desc(lag))
+
+    ## # A tibble: 10 x 4
+    ##    country     year suicides_rate   lag
+    ##    <chr>      <dbl>         <dbl> <dbl>
+    ##  1 Slovakia    2008         11.5  11.5 
+    ##  2 Luxembourg  1987         21.2   6.44
+    ##  3 Lithuania   2013         38.7   5.99
+    ##  4 Malta       2009          9.16  5.57
+    ##  5 Luxembourg  2014         12.8   4.96
+    ##  6 Portugal    2002         12.3   4.51
+    ##  7 Malta       1989          7.10  4.29
+    ##  8 Malta       1999          7.59  4.20
+    ##  9 Latvia      2008         25.5   3.85
+    ## 10 Luxembourg  2006         14.6   3.41
+
+### Top 10 biggest decrease in suicide rate in 1 year
+
+    EUrate %>% 
+      mutate(lag = suicides_rate - lag(suicides_rate)) %>% 
+      top_n(10, -lag) %>% 
+      arrange(lag)
+
+    ## # A tibble: 10 x 4
+    ##    country     year suicides_rate    lag
+    ##    <chr>      <dbl>         <dbl>  <dbl>
+    ##  1 Slovakia    2006          0    -13.2 
+    ##  2 Luxembourg  2003         11.3   -9.00
+    ##  3 Lithuania   2006         33.6   -7.99
+    ##  4 Luxembourg  2008          9.34  -7.92
+    ##  5 Estonia     2000         28.3   -7.38
+    ##  6 Lithuania   2014         33.4   -5.22
+    ##  7 Luxembourg  1992         16.1   -5.15
+    ##  8 Slovenia    2007         22.5   -5.05
+    ##  9 Malta       1990          2.44  -4.66
+    ## 10 Luxembourg  1998         16.1   -4.55
+
+Based on this, more information can be obtained to get a further insight
+of the events in these countries
+
+### Biggest changes
+
+    (ggplot(data = EUrate %>% 
+              filter(country %in% 
+                       (EUrate %>% group_by(country) %>%
+                          filter(!is.na(suicides_rate)) %>% 
+                          summarise(delta = max(suicides_rate, na.rm = T) - min(suicides_rate, na.rm = T)) %>% 
+                          arrange(desc(delta)) %>% 
+                          top_n(5, delta) %>% pull(country))),
+            aes(year, suicides_rate, color = country)) + 
+      geom_line() +
+      geom_text_repel(aes(label = country), xlim = c(2020, NA), hjust = 0, segment.alpha = 0.2) +
+      coord_cartesian(clip = "off") +
+      theme(legend.position = "none",
+            plot.margin = margin(1, 3.5, 1, 1, "cm")) +
+      labs(title = "Top changes in rate of suicide", subtitle = "in {round(frame_along)} in EU", x = "Year", 
+           y = "Suicide rate") +
+      transition_reveal(year)) %>% 
+      animate(duration = 20)
+
+![](README_files/figure-markdown_strict/unnamed-chunk-47-1.gif)
+
+### Suicide rate by GDP
+
+    EUrate %>% left_join(countrystat) %>% 
+      ggplot(aes(suicides_rate, gdp_capita)) + 
+      geom_point() +
+      labs(y = "GDP per capita", x = "Suicide rate", title = "Suicide rate by GDP in EU", subtitle = "Since 1985")
+
+![](README_files/figure-markdown_strict/unnamed-chunk-48-1.png)
+
+There is no indication of a relationship between them
+
+### Rate of suicides by gender each year in the EU
+
+    data %>%  
+      group_by(year, sex) %>% 
+      summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5) %>% 
+      ggplot(aes(year, suicides_no, color = sex)) + 
+      geom_line(aes(linetype = "Worldwide")) +
+      geom_line(data = data %>% 
+                  filter(country  %in% eu) %>% 
+                  group_by(year, sex) %>% 
+                  summarise(suicides_no = sum(suicides_no, na.rm = T)/ sum(population, na.rm = T) * 1e5), aes(linetype = "EU")) +
+      scale_linetype_manual(name = "Region" ,values = c("Worldwide" = 2, "EU" = 1)) +
+      labs(title = "Rate of suicide by gender", subtitle = "Since 1985 in EU and worldwide",
+           x = "Year", y = "Rate of suicide")
+
+![](README_files/figure-markdown_strict/unnamed-chunk-49-1.png)
+
+### Rate of suicides by gender each year in every country
+
+    data %>% 
+      filter(country %in% eu) %>% 
+      group_by(country, year, sex) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population) * 1e5) %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
+      geom_line() + facet_wrap(~sex) +
+      theme(legend.position = "none") +
+      labs(title = "Rate of suicide by gender", subtitle = "Since 1985 in EU",
+           x = "Year", y = "Rate of suicide")
+
+    ## Warning: Removed 142 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_strict/unnamed-chunk-50-1.png)
+
+### Rate of suicides by age group each year in every country
+
+    data %>% 
+      filter(country %in% eu) %>% 
+      group_by(country, year, age) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
+      geom_line() + facet_wrap(~ age) +
+      theme(legend.position = "none") +
+      labs(title = "Rate of suicide by age", subtitle = "Since 1985 in EU",
+           x = "Year", y = "Rate of suicide")
+
+    ## Warning: Removed 133 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_strict/unnamed-chunk-51-1.png)
+
+### Rate of suicides by age group and sex
+
+    data %>% 
+      filter(country %in% eu) %>% 
+      group_by(country, year, age, sex) %>% 
+      summarise(suicides_rate = sum(suicides_no)/sum(population)*1e5) %>% 
+      ggplot(aes(year, suicides_rate, color = country)) + 
+      geom_line() + facet_grid(age ~ sex)+
+      theme(legend.position = "none") +
+      labs(title = "Rate of suicide by age and sex", subtitle = "Since 1985 in EU",
+           x = "Year", y = "Rate of suicide")
+
+    ## Warning: Removed 133 rows containing missing values (geom_path).
+
+![](README_files/figure-markdown_strict/unnamed-chunk-52-1.png)
 
 Finland
 -------
@@ -683,9 +992,11 @@ Finland
       filter(!is.na(suicides_no)) %>% 
       ggplot() + geom_point(aes(year, suicides_no, color = fct_reorder2(age, year, suicides_no))) +
       geom_line(aes(year, suicides_no, colour = age)) + facet_wrap(~sex) +
-      scale_color_discrete(name = "Age group")
+      scale_color_discrete(name = "Age group") +
+      labs(title = "Number of suicides by sex", subtitle = "in Finland",
+           x = "Year", y = "Number of suicides")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-39-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-53-1.png)
 
 ### Rate of suicides by sex
 
@@ -693,9 +1004,11 @@ Finland
       filter(!is.na(suicides_no)) %>% 
       ggplot() + geom_point(aes(year, suicides_rate, color = fct_reorder2(age, year, suicides_rate))) +
       geom_line(aes(year, suicides_rate, colour = age)) + facet_wrap(~sex)+
-      scale_color_discrete(name = "Age group")
+      scale_color_discrete(name = "Age group") +
+      labs(title = "Rate of suicides by sex", subtitle = "in Finland",
+           x = "Year", y = "Rate of suicides")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-40-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-54-1.png)
 
 ### Rate of suicides by generation
 
@@ -704,6 +1017,8 @@ Finland
       summarise(suicides_rate = sum(suicides_no)/sum(population)) %>% 
       ggplot() + geom_point(aes(year, suicides_rate, color = fct_reorder2(generation, year, suicides_rate))) +
       geom_line(aes(year, suicides_rate, colour = generation)) + facet_wrap(~sex)+
-      scale_color_discrete(name = "Genration")
+      scale_color_discrete(name = "Genration") +
+      labs(title = "Number of suicides by generation", subtitle = "in Finland",
+           x = "Year", y = "Number of suicides")
 
-![](README_files/figure-markdown_strict/unnamed-chunk-41-1.png)
+![](README_files/figure-markdown_strict/unnamed-chunk-55-1.png)
