@@ -259,15 +259,15 @@ Plot on map
                                                   direction = "horizontal",
                                                   nbin = 10)) +
       labs(title = "Missing data map", subtitle = "Since 1985") +
-      theme(legend.position = c(0,.1),
-            legend.justification = "left",
+      theme(legend.position = c(0.5,.1),
+            legend.justification = "center",
             legend.key.width = unit(3,"cm"),
             panel.grid = element_blank(),
             axis.text = element_blank(),
             axis.text.x = element_blank(),
             axis.text.y = element_blank(), 
             legend.title.align = 0.5,
-            legend.title = element_text(face = "bold"))
+            legend.title = element_text(size = 20, face = "bold", color = "#222222"))
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-14-1.png)
 
@@ -542,7 +542,7 @@ Prepare data
 From 2010
 ---------
 
-Total number of people suicide since 2010
+Total number of suicide since 2010
 
     worldmap + data %>% filter(year >= 2010 & year < 2016) %>%
       group_by(country) %>% 
@@ -554,7 +554,7 @@ Total number of people suicide since 2010
                            trans = "log10",
                            guide = guide_colorbar(title.position = "top", 
                                                   direction = "horizontal")) +
-      labs(title = "Total number of people suicide", subtitle = "Since 2010") +
+      labs(title = "Total number of suicide", subtitle = "Since 2010") +
       theme(legend.position = "bottom",
             legend.key.width = unit(5,"cm"),
             legend.title = element_text(size = 20, face = "bold", color = "#222222"),
@@ -568,7 +568,7 @@ Total number of people suicide since 2010
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-28-1.png)
 
-### Average rate of people suicide since 2010
+### Average rate of suicide since 2010
 
     worldmap + rate %>% filter(year >= 2010 & year < 2016) %>%
       group_by(country) %>% summarise(n = mean(suicides_rate, na.rm = T)) %>% filter(!is.na(n)) %>% 
@@ -577,7 +577,7 @@ Total number of people suicide since 2010
       scale_fill_viridis_c(name = "Average number of suicides",
                            guide = guide_colorbar(title.position = "top", 
                                                   direction = "horizontal")) +
-      labs(title = "Average number of people suicide", subtitle = "Since 2010") +
+      labs(title = "Average rate of suicide", subtitle = "Since 2010") +
       theme(legend.position = "bottom",
             legend.key.width = unit(5,"cm"),
             legend.title = element_text(size = 20, face = "bold", color = "#222222"),
