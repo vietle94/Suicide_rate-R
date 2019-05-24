@@ -265,7 +265,7 @@ Plot on map
             panel.grid = element_blank(),
             axis.text = element_blank(),
             axis.text.x = element_blank(),
-            axis.text.y = element_blank(),
+            axis.text.y = element_blank(), 
             legend.title.align = 0.5,
             legend.title = element_text(face = "bold"))
 
