@@ -1,3 +1,23 @@
+Intro
+=====
+
+Data were taken from:
+
+United Nations Development Program. (2018). Human development index
+(HDI). Retrieved from
+<a href="http://hdr.undp.org/en/indicators/137506" class="uri">http://hdr.undp.org/en/indicators/137506</a>
+
+World Bank. (2018). World development indicators: GDP (current US$) by
+country:1985 to 2016. Retrieved from
+<a href="http://databank.worldbank.org/data/source/world-development-indicators#" class="uri">http://databank.worldbank.org/data/source/world-development-indicators#</a>
+
+\[Szamil\]. (2017). Suicide in the Twenty-First Century \[dataset\].
+Retrieved from
+<a href="https://www.kaggle.com/szamil/suicide-in-the-twenty-first-century/notebook" class="uri">https://www.kaggle.com/szamil/suicide-in-the-twenty-first-century/notebook</a>
+
+World Health Organization. (2018). Suicide prevention. Retrieved from
+<a href="http://www.who.int/mental_health/suicide-prevention/en/" class="uri">http://www.who.int/mental_health/suicide-prevention/en/</a>
+
 Load library ——————
 ===================
 
