@@ -84,13 +84,13 @@ Have a look
 
     summary(data)
 
-    ##    country               year          sex                age           
-    ##  Length:27820       Min.   :1985   Length:27820       Length:27820      
-    ##  Class :character   1st Qu.:1995   Class :character   Class :character  
-    ##  Mode  :character   Median :2002   Mode  :character   Mode  :character  
-    ##                     Mean   :2001                                        
-    ##                     3rd Qu.:2008                                        
-    ##                     Max.   :2016                                        
+    ##    country               year          sex                     age      
+    ##  Length:27820       Min.   :1985   Length:27820       5-14 years :4610  
+    ##  Class :character   1st Qu.:1995   Class :character   15-24 years:4642  
+    ##  Mode  :character   Median :2002   Mode  :character   25-34 years:4642  
+    ##                     Mean   :2001                      35-54 years:4642  
+    ##                     3rd Qu.:2008                      55-74 years:4642  
+    ##                     Max.   :2016                      75+ years  :4642  
     ##                                                                         
     ##   suicides_no        population       suicides_rate    country-year      
     ##  Min.   :    0.0   Min.   :     278   Min.   :  0.00   Length:27820      
@@ -131,11 +131,16 @@ A closer look:
     ## 
     ## -- Variable type:character ---------------------------------------------------------------------------------------------
     ##      variable missing complete     n min max empty n_unique
-    ##           age       0    27820 27820   9  11     0        6
     ##       country       0    27820 27820   4  28     0      101
     ##  country-year       0    27820 27820   8  32     0     2321
     ##    generation       0    27820 27820   6  15     0        6
     ##           sex       0    27820 27820   4   6     0        2
+    ## 
+    ## -- Variable type:factor ------------------------------------------------------------------------------------------------
+    ##  variable missing complete     n n_unique
+    ##       age       0    27820 27820        6
+    ##                                  top_counts ordered
+    ##  15-: 4642, 25-: 4642, 35-: 4642, 55-: 4642   FALSE
     ## 
     ## -- Variable type:numeric -----------------------------------------------------------------------------------------------
     ##       variable missing complete     n          mean            sd
@@ -209,7 +214,7 @@ there are some country only miss 2 data, Let’s review those
 
     ## # A tibble: 32 x 9
     ##    country  year sex   age   suicides_no population suicides_rate
-    ##    <chr>   <dbl> <chr> <chr>       <dbl>      <dbl>         <dbl>
+    ##    <chr>   <dbl> <chr> <fct>       <dbl>      <dbl>         <dbl>
     ##  1 Armenia  2016 fema~ 5-14~          NA         NA            NA
     ##  2 Armenia  2016 male  5-14~          NA         NA            NA
     ##  3 Austria  2016 fema~ 5-14~          NA         NA            NA
@@ -259,7 +264,7 @@ Plot on map
                                                   direction = "horizontal",
                                                   nbin = 10)) +
       labs(title = "Missing data map", subtitle = "Since 1985") +
-      theme(legend.position = c(0.5,.1),
+      theme(legend.position = "bottom",
             legend.justification = "center",
             legend.key.width = unit(3,"cm"),
             panel.grid = element_blank(),
@@ -694,7 +699,7 @@ highest suicide rate
       labs(title = "Number of suicides by age group", subtitle = "Since 1985",
            x = "Year", y = "Number of suicides")
 
-    ## Warning: Removed 759 rows containing missing values (geom_path).
+    ## Warning: Removed 791 rows containing missing values (geom_path).
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-36-1.png)
 
@@ -708,7 +713,7 @@ highest suicide rate
       labs(title = "Rate of suicides by age group", subtitle = "Since 1985",
            x = "Year", y = "Rate of suicides")
 
-    ## Warning: Removed 759 rows containing missing values (geom_path).
+    ## Warning: Removed 791 rows containing missing values (geom_path).
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-37-1.png)
 
@@ -722,7 +727,7 @@ highest suicide rate
       labs(title = "Number of suicides by age and sex", subtitle = "Since 1985",
            x = "Year", y = "Number of suicides")
 
-    ## Warning: Removed 759 rows containing missing values (geom_path).
+    ## Warning: Removed 823 rows containing missing values (geom_path).
 
 ![](README_files/figure-markdown_strict/unnamed-chunk-38-1.png)
 

@@ -206,7 +206,7 @@ worldmap + data %>%
                                               direction = "horizontal",
                                               nbin = 10)) +
   labs(title = "Missing data map", subtitle = "Since 1985") +
-  theme(legend.position = c(0.5,.1),
+  theme(legend.position = "bottom",
         legend.justification = "center",
         legend.key.width = unit(3,"cm"),
         panel.grid = element_blank(),
