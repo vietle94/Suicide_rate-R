@@ -7,6 +7,8 @@ are no good analysis, only useful ones”, with that in mind, my
 illustrations are up to reader’s interpretation. Furthur analysis into
 each country will be made in the near future.
 
+Note: the rate of suicide are in 1/100000
+
 Data were taken from:
 
 United Nations Development Program. (2018). Human development index
