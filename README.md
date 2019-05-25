@@ -605,7 +605,7 @@ Total number of suicide since 2010
       group_by(country) %>% summarise(n = mean(suicides_rate, na.rm = T)) %>% filter(!is.na(n)) %>% 
       left_join(world, by = c("country" = "region")) %>%  
       geom_polygon(data = ., aes(fill = n))  + 
-      scale_fill_viridis_c(name = "Average number of suicides",
+      scale_fill_viridis_c(name = "Average rate of suicides each year",
                            guide = guide_colorbar(title.position = "top", 
                                                   direction = "horizontal")) +
       labs(title = "Average rate of suicide", subtitle = "Since 2010") +
